@@ -1,0 +1,49 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+
+#---------------------------------------------
+allInstall() { 
+#---------------------------------------------
+  . ${INSTALL_SCRIPTS_BASE}/001-tomcat install
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/002-httpd install
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/003-opendj install
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/004-openam install
+  exitIfRCFailure
+}
+
+#---------------------------------------------
+allUninstall() { 
+#---------------------------------------------
+  . ${INSTALL_SCRIPTS_BASE}/001-tomcat uninstall
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/002-httpd uninstall
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/003-opendj uninstall
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/004-openam uninstall
+  exitIfRCFailure
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+printScriptStart
+if [ $# == 1 ] && [ $1 == "uninstall" ]; then
+  printf "INFO: Mode is UNINSTALL.\n"
+  allUninstall
+else
+  allInstall
+fi
+printScriptEnd
+

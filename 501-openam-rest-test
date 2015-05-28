@@ -1,0 +1,104 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#SAMPLE_JWT="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.EkN-DOsnsuRjRO6BxXemmJDm3HbxrbRzXglbN2S4sOkopdU4IsDxTI8jO19W_A4K8ZPJijNLis4EZsHeY559a4DFOd50_OqgHGuERTqYZyuhtF39yxJPAjUESwxk2J5k_4zM3O-vtd1Ghyo4IbqKKSy6J9mTniYJPenn5-HIirE"
+SAMPLE_JWT="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJpc3MiOiJodHRwczovL2p3dC1pZHAuZXhhbXBsZS5jb20iLCJzdWIiOiJtYWlsdG86bWlrZUBleGFtcGxlLmNvbSIsIm5iZiI6MTQzNjM2NDE4OCwiZXhwIjoxNDM2MzY3Nzg4LCJpYXQiOjE0MzYzNjQxODgsImp0aSI6ImlkMTIzNDU2IiwidHlwIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9yZWdpc3RlciJ9."
+
+#---------------------------------------------
+checkRestAuthZeroPage() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+
+  REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate
+
+  printf "INFO: Authentication via REST (zero page) as ${USER} ...\n"
+  RC=$(${CURL} -s --insecure --request POST --header "X-OpenAM-Username: ${USER}" --header "X-OpenAM-Password: ${PASSWORD}" --header "Content-Type: application/json" --data "{}" ${REST_AUTH_URL})
+  
+  echo $RC
+  printf "\n"
+}
+
+#---------------------------------------------
+checkRestAuthLegacy() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+
+  LEGACY_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/identity/authenticate
+
+  printf "INFO: Authentication via REST (legacy) as ${USER} ...\n"
+  ${CURL} -s --insecure --request POST --data "username=${USER}&password=${PASSWORD}" ${LEGACY_AUTH_URL}
+}
+
+#---------------------------------------------
+checkRestAuthCallbacks() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+
+  REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate
+
+  printf "INFO: Authentication via REST (callbacks) as ${USER} ...\n"
+  ${CURL} -i --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${SAMPLE_JWT}'", "template": "", "stage": "DataStore1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "demo" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "changeit" } ] } ] }' ${REST_AUTH_URL}
+
+  printf "\n"
+}
+
+#---------------------------------------------
+getServerInfo() {
+#---------------------------------------------
+  BASE_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}
+
+  printf "INFO: Getting server info ...\n"
+  ${CURL} -s --insecure --request GET ${BASE_URL}/json/serverinfo/*
+  printf "\n"
+
+  printf "INFO: Getting cookie name ...\n"
+  ${CURL} -s --insecure --request GET ${BASE_URL}/identity/getCookieNameForToken
+  printf "\n"
+
+  printf "INFO: Getting cookie names to forward ...\n"
+  ${CURL} -s --insecure --request GET ${BASE_URL}/identity/getCookieNamesToForward
+  printf "\n"
+} 
+
+#---------------------------------------------
+seriesA() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+
+  REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate
+
+  printf "INFO: Series A as ${USER} ...\n"
+  ${CURL} -s --insecure --request POST --header "X-OpenAM-Username: ${USER}" --header "X-OpenAM-Password: ${PASSWORD}" --header "Content-Type: application/json" --data "{}" ${REST_AUTH_URL}
+  TOKENID=`${CURL} -s --insecure --request POST --header "X-OpenAM-Username: ${USER}" --header "X-OpenAM-Password: ${PASSWORD}" --header "Content-Type: application/json" --data "{}" ${REST_AUTH_URL} | /opt/misc/jq --raw-output '.tokenId'`
+  printf "\n"
+  printf "tokenId=${TOKENID}\n"
+  printf "\n"
+
+  SESSIONS_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/sessions
+
+  printf "INFO: Validating session with tokenId ${TOKENID}...\n"
+  ${CURL} -s --insecure --request POST --header "Content-Type: application/json" ${SESSIONS_URL}/${TOKENID}?_action=validate
+  printf "\n"
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+#checkRestAuthZeroPage demo changeit
+#checkRestAuthZeroPage demo changeitwrong
+#checkRestAuthZeroPage ${OPENAM_ADMIN} ${OPENAM_ADMIN_PASSWORD}
+#checkRestAuthCallbacks demo changeit
+#checkRestAuth ${OPENAM_ADMIN} ${OPENAM_ADMIN_PASSWORD}
+
+#checkRestAuthLegacy demo changeit
+#getServerInfo
+
+# statefull & stateless sessions
+seriesA demo changeit
