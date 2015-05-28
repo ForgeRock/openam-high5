@@ -1,0 +1,268 @@
+#!/bin/bash
+
+RETURN_SUCCESS=0
+RETURN_FAILURE=1
+
+#
+# System Tools
+#
+MKDIR=/bin/mkdir
+UNZIP=/bin/unzip
+TAR=/bin/tar
+CHMOD=/bin/chmod
+PWD=/bin/pwd
+RM=/bin/rm
+CURL=/bin/curl
+OPENSSL=/bin/openssl
+MV=/bin/mv
+CP=/bin/cp
+SED=/bin/sed
+DATE=/bin/date
+NETSTAT=/bin/netstat
+GREP=/bin/grep
+CHOWN=/bin/chown
+CHMOD=/bin/chmod
+CP=/bin/cp
+WGET=/bin/wget
+TOOLS="${MKDIR} ${UNZIP} ${TAR} ${CHMOD} ${PWD} ${RM} ${CURL} ${OPENSSL} ${MV} ${CP} ${SED} ${DATE} ${NETSTAT} ${GREP} ${CHOWN} ${CHMOD} ${CP} ${WGET}"
+
+#
+# Return code handling: Always set the _RC variable in the
+#   checker functions to allow to track the return codes
+#
+#----------------------------------------------------------
+setRCFailure() {
+#----------------------------------------------------------
+  _RC=${RETURN_FAILURE}
+}
+
+#----------------------------------------------------------
+setRCSuccess() {
+#----------------------------------------------------------
+  _RC=${RETURN_SUCCESS}
+}
+
+#
+# If _RC is not set, set if to success
+#
+if [ -z ${_RC} ]; then
+  setRCSuccess
+  export _RC
+fi
+
+#----------------------------------------------------------
+exitSuccess() {
+#----------------------------------------------------------
+  _RC=${RETURN_SUCCESS}
+  exit ${RETURN_SUCCESS}
+}
+
+#----------------------------------------------------------
+exitFailure() {
+#----------------------------------------------------------
+  _RC=${RETURN_FAILURE}
+  exit ${RETURN_FAILURE}
+}
+
+#----------------------------------------------------------
+exitIfRCFailure() {
+#----------------------------------------------------------
+  if  [ ${_RC} != ${RETURN_SUCCESS} ]; then
+    exitFailure
+  fi
+}
+
+#----------------------------------------------------------
+returnSuccess() {
+#----------------------------------------------------------
+  _RC=${RETURN_SUCCESS}
+  return ${RETURN_SUCCESS}
+}
+
+#----------------------------------------------------------
+returnFailure() {
+#----------------------------------------------------------
+  _RC=${RETURN_FAILURE}
+  return ${RETURN_FAILURE}
+}
+
+#----------------------------------------------------------
+returnRC() {
+#----------------------------------------------------------
+  return ${_RC}
+}
+
+#----------------------------------------------------------
+functionReturnedSuccess() {
+#----------------------------------------------------------
+  if [ ${_RC} == ${RETURN_SUCCESS} ]; then
+    returnSuccess
+  else
+    returnFailure
+  fi
+}
+
+#
+# Checker functions
+#
+
+#----------------------------------------------------------
+checkIfFileExists() {
+#----------------------------------------------------------
+  FILE=$1
+  if [ ! -f ${FILE} ]; then
+    returnFailure
+  fi
+
+  returnSuccess
+}
+
+#----------------------------------------------------------
+checkIfDirectoryExists() {
+#----------------------------------------------------------
+  DIR=$1
+  if [ ! -d ${DIR} ]; then
+    returnFailure
+  fi
+
+  returnSuccess
+}
+
+#----------------------------------------------------------
+checkIfDirectoryIsEmpty() {
+#----------------------------------------------------------
+  DIR=$1
+  if [ "$(ls -A ${DIR})" ]; then
+    returnFailure
+  else
+    returnSuccess
+  fi
+}
+
+#----------------------------------------------------------
+checkTools() {
+#----------------------------------------------------------
+  setRCSuccess
+  for tool in ${TOOLS}; do
+    if [ ! -f ${tool} ]; then
+      setRCFailure
+      printf "ERROR: Tool ${tool} does not exist.\n"
+    fi
+  done
+  returnRC
+}
+
+#----------------------------------------------------------
+checkJava() {
+#----------------------------------------------------------
+  setRCSuccess
+  if [ ! -d ${JAVA_HOME} ]; then
+    printf "ERROR: JAVA_HOME directory does not exist at ${JAVA_HOME}. Aborting.\n"
+    setRCFailure
+  else
+    JAVA_VERSION=$("${JAVA_HOME}/bin/java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
+    if [ $? != 0 ]; then
+      printf "ERROR: Cannot determine Java version based on JAVA_HOME=${JAVA_HOME}. Aborting.\n"
+      setRCFailure
+    else
+      printf "INFO: Java version is ${JAVA_VERSION}.\n"
+    fi 
+  fi
+  returnRC
+}
+
+
+#----------------------------------------------------------
+checkExecutionDirectory() {
+#----------------------------------------------------------
+
+  setRCSuccess
+  CUR_DIR=`${PWD}`
+  if [ -z ${PKG_BASE} ] || [ -z ${INSTALL_BASE} ]; then
+    printf "ERROR: Either PKG_BASE or INSTALL_BASE are not set. You are probably running this script not from the package base directory. Aborting.\n"
+    returnFailure
+  fi
+
+  if [ ! "${CUR_DIR}" == ${PKG_BASE} ]; then
+    printf "ERROR: Scripts should be executed from the package base directory (${PKG_BASE}) and not the current directory (${CUR_DIR}). Aborting.\n"
+    returnFailure
+  fi
+  returnRC
+}
+
+#----------------------------------------------------------
+checkFiles() {
+#----------------------------------------------------------
+  returnSuccess
+}
+
+#----------------------------------------------------------
+escapePath(){
+#----------------------------------------------------------
+  PATH_TO_ESCAPE=$1
+  ESCAPEDPATH=""
+  ORIGIFS="$IFS"
+  IFS="/"
+  set -- ${PATH_TO_ESCAPE}
+  NUM_PARTS=$#
+  IFS=$ORIGIFS
+  shift
+  i=1
+  while [ ${i} -lt ${NUM_PARTS} ]; do
+    i=$(($i+1))
+    ESCAPEDPATH=$ESCAPEDPATH\\\/$1
+    shift
+  done
+  printf "$ESCAPEDPATH"
+}
+
+#----------------------------------------------------------
+escapeURL(){
+#----------------------------------------------------------
+  URL_TO_ESCAPE=$1
+  ESCAPEDURL=""
+  ORIGIFS="$IFS"
+  IFS="/"
+  set -- ${URL_TO_ESCAPE}
+  NUM_PARTS=$#
+  IFS=$ORIGIFS
+  #shift
+  ESCAPEDURL=$1
+  shift
+  i=1
+  while [ ${i} -lt ${NUM_PARTS} ]; do
+    i=$(($i+1))
+    ESCAPEDURL=$ESCAPEDURL\\\/$1
+    shift
+  done
+  printf "$ESCAPEDURL"
+}
+
+
+#----------------------------------------------------------
+printScriptStart(){
+#----------------------------------------------------------
+  printf "===========================================================\n"
+  printf "  Starting script $0\n"
+  printf "===========================================================\n"
+}
+
+#----------------------------------------------------------
+printScriptEnd(){
+#----------------------------------------------------------
+  printf "===========================================================\n"
+  printf "  Finished script $0\n"
+  printf "===========================================================\n"
+}
+
+#----------------------------------------------------------
+isPortAvailable() {
+#----------------------------------------------------------
+  PORT=$1
+  ${NETSTAT} -an | ${GREP} ${PORT} | ${GREP} LISTEN
+  if [ $? = 1 ]; then
+    returnSuccess
+  else
+    returnFailure
+  fi
+}

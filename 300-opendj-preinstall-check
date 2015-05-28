@@ -1,0 +1,61 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+. ./functions-opendj
+
+#---------------------------------------------
+checkPrereqs() {
+#---------------------------------------------
+  setRCSuccess
+  checkIfFileExists ${OPENDJ_ZIP}
+  if [ $? != 0 ]; then
+    echo "ERROR: File ${OPENDJ_ZIP} does not exist. Aborting."
+    setRCFailure
+  fi
+  returnRC
+}
+
+#---------------------------------------------
+checkAll() {
+#---------------------------------------------
+  checkExecutionDirectory
+  exitIfRCFailure
+
+  checkTools
+  exitIfRCFailure
+
+  checkJava
+  exitIfRCFailure
+
+  checkPrereqs
+  exitIfRCFailure
+
+  checkBaseDir
+  exitIfRCFailure
+
+  isPortAvailable ${OPENDJ_LDAP_PORT} 
+  if [ $? != 0  ]; then
+    printf "ERROR: Port ${OPENDJ_LDAP_PORT} is not available. Aborting.\n";
+    exitFailure
+  fi
+
+  #isPortAvailable ${OPENDJ_LDAPS_PORT} 
+  #if [ $? != 0  ]; then
+  #  printf "ERROR: Port ${OPENDJ_LDAPS_PORT} is not available. Aborting.\n";
+  #  exitFailure
+  #fi
+
+  isPortAvailable ${OPENDJ_ADMIN_PORT} 
+  if [ $? != 0  ]; then
+    printf "ERROR: Port ${OPENDJ_ADMIN_PORT} is not available. Aborting.\n";
+    exitFailure
+  fi
+
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+checkAll
+

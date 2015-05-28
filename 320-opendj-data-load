@@ -1,0 +1,40 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-opendj
+
+#----------------------------------------------------------
+generateLdif() {
+#----------------------------------------------------------
+  ${SED} -e "s/%SUFFIX%/${OPENDJ_SUFFIX}/g" ${INSTALL_SCRIPTS_BASE}/templates/userdata.ldif.TEMPLATE > ${OPENDJ_USERDATA_LDIF}
+  if [ $? -ne 0 ]; then
+    printf "ERROR: Error generating userdata LDIF file from template. Aborting.\n"
+    exitFailure
+  fi
+}
+
+#----------------------------------------------------------
+loadData() {
+#----------------------------------------------------------
+  printf "INFO: Stopping OpenDJ before data import.\n"
+  stopOpenDJ
+
+  printf "INFO: Importing directory data ...\n"
+  ${OPENDJ_BASE}/bin/import-ldif --ldifFile ${OPENDJ_USERDATA_LDIF} --backendID userRoot --skipFile import-ldif.skipfile  --rejectFile import-ldif.rejectfile
+  if [ $? -ne 0 ]; then
+    printf "ERROR: Error importing LDIF file ${OPENDJ_USERDATA_LDIF}. Aborting.\n"
+    startOpenDJ
+    exitFailure
+  fi
+
+  printf "INFO: Successfully imported LDIF file ${OPENDJ_USERDATA_LDIF}.\n"
+  startOpenDJ
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+generateLdif
+loadData
+

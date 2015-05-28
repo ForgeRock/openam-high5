@@ -1,0 +1,20 @@
+dn: %SUFFIX%
+objectClass: domain
+objectClass: top
+
+dn: ou=people,%SUFFIX%
+objectClass: organizationalUnit
+objectClass: top
+
+dn: ou=admins,%SUFFIX%
+objectClass: organizationalUnit
+objectClass: top
+
+dn: uid=dude,ou=people,%SUFFIX%
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+sn: Duder
+cn: Dude Duder
+

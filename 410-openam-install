@@ -1,0 +1,65 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+installOpenAM() {
+#---------------------------------------------
+
+  checkBaseDir
+  exitIfRCFailure
+
+  if [ ! -d ${OPENAM_BASE} ]; then
+    ${MKDIR} ${OPENAM_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: Error creating OpenAM base directory ${OPENAM_BASE}. Aborting.\n"
+      exitFailure
+    fi
+  fi
+
+  if [ ! -d ${OPENAM_SOFTWARE_EXTRACT_BASE} ]; then
+    ${MKDIR} -p ${OPENAM_SOFTWARE_EXTRACT_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: Error creating OpenAM unzip directory ${OPENAM_SOFTWARE_EXTRACT_BASE}. Aborting.\n"
+      exitFailure
+    fi
+  fi
+
+  #
+  # Extract the MEGA Zip
+  #
+  ${UNZIP} -q ${OPENAM_ZIP} -d ${OPENAM_SOFTWARE_EXTRACT_BASE}
+  if [ $? != 0 ]; then
+    printf "ERROR: Error unzipping the OpenAM software ${OPENAM_ZIP} in directory ${OPENAM_SOFTWARE_EXTRACT_BASE}. Aborting.\n"
+    exitFailure
+  else
+    printf "INFO: Successfully unzipped the OpenAM software in directory ${OPENAM_SOFTWARE_EXTRACT_BASE}.\n"
+  fi 
+
+  #
+  # Extract the configuration tools
+  #
+  if [ ! -d ${OPENAM_CONFIGURATOR_EXTRACT_BASE} ]; then
+    ${MKDIR} -p ${OPENAM_CONFIGURATOR_EXTRACT_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: Error creating OpenAM configurator unzip directory ${OPENAM_CONFIGURATOR_EXTRACT_BASE}. Aborting.\n"
+      exitFailure
+    fi
+  fi
+
+  ${UNZIP} -q ${OPENAM_CONFIGURATOR_ZIP} -d ${OPENAM_CONFIGURATOR_EXTRACT_BASE}
+  if [ $? != 0 ]; then
+    printf "ERROR: Error unzipping the OpenAM configurator zip ${OPENAM_CONFIGURATOR_ZIP} in directory ${OPENAM_CONFIGURATOR_EXTRACT_BASE}. Aborting.\n"
+    exitFailure
+  else
+    printf "INFO: Successfully unzipped the OpenAM configurator zip in directory ${OPENAM_CONFIGURATOR_EXTRACT_BASE}.\n"
+  fi 
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+installOpenAM
+

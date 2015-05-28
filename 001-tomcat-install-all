@@ -1,0 +1,43 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+
+#---------------------------------------------
+tomcatInstall() { 
+#---------------------------------------------
+  . ${INSTALL_SCRIPTS_BASE}/100-tomcat-preinstall-check
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/101-tomcat-install-prepare
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/110-tomcat-install
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/120-tomcat-configure
+  exitIfRCFailure
+}
+
+#---------------------------------------------
+tomcatUninstall() { 
+#---------------------------------------------
+  . ${INSTALL_SCRIPTS_BASE}/190-tomcat-uninstall
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+printScriptStart
+if [ $# == 1 ] && [ $1 == "uninstall" ]; then
+  printf "INFO: Mode is UNINSTALL.\n"
+  tomcatUninstall
+else
+  tomcatInstall
+fi
+printScriptEnd
+
+
+
+
+

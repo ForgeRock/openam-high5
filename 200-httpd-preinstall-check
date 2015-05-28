@@ -1,0 +1,38 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+
+#---------------------------------------------
+checkBaseDir() {
+#---------------------------------------------
+  setRCSuccess
+  checkIfDirectoryExists ${HTTPD_BASE}
+  if [ $? == 0 ]; then
+    checkIfDirectoryIsEmpty ${TOMCAT_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: HTTPD configuration directory ${HTTPD_BASE} does not exist. You must install HTTPD beforehand (e.g. yum install httpd). Aborting.\n"
+      setRCFailure
+    fi 
+  fi
+  returnRC
+}
+
+#---------------------------------------------
+checkAll() {
+#---------------------------------------------
+  checkExecutionDirectory
+  exitIfRCFailure
+
+  checkTools
+  exitIfRCFailure
+
+  checkBaseDir
+  exitIfRCFailure
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+checkAll
+

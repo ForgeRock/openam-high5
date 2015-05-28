@@ -1,0 +1,35 @@
+#!/bin/bash 
+
+#---------------------------------------------
+checkBaseDir() {
+#---------------------------------------------
+  setRCSuccess
+  checkIfDirectoryExists ${OPENDJ_BASE}
+  if [ $? == 0 ]; then
+    checkIfDirectoryIsEmpty ${OPENDJ_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: The OpenDJ installation directory ${OPENDJ_BASE} is NOT empty. Aborting.\n"
+      setRCFailure
+    fi
+  fi
+  returnRC
+}
+
+#---------------------------------------------
+startOpenDJ() {
+#---------------------------------------------
+  export JAVA_HOME=${JAVA_HOME}
+  ${OPENDJ_BIN_DIR}/start-ds
+  printf "INFO: OpenDJ startup return code: $?\n"
+}
+
+#---------------------------------------------
+stopOpenDJ() {
+#---------------------------------------------
+  export JAVA_HOME=${JAVA_HOME}
+  if [ -f ${OPENDJ_BIN_DIR}/stop-ds ]; then
+    ${OPENDJ_BIN_DIR}/stop-ds
+    printf "INFO: OpenDJ shutdown return code: $?\n"
+  fi
+}
+

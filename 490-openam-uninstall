@@ -1,0 +1,28 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+removeOpenAMFiles() {
+#---------------------------------------------
+  if [ ! -z ${OPENAM_BASE} ]; then
+    ${RM} -rf ${OPENAM_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: Error removing data in OpenAM base directory ${OPENAM_BASE}. Aborting.\n"
+    else
+      printf "INFO: Successfully removed OpenAM files from directory ${OPENAM_BASE}.\n"
+    fi 
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+removeOpenAMFiles
+
+
+
+
+

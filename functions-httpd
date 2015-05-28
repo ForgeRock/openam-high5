@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#---------------------------------------------
+startHttpd() {
+#---------------------------------------------
+  service httpd start
+  if [ $? != 0 ]; then
+    printf "ERROR: HTTPD startup failed.\n"
+    exitFailure
+  else
+    printf "INFO: HTTPD startup successful.\n"
+  fi
+}
+
+#---------------------------------------------
+stopHttpd() {
+#---------------------------------------------
+  service httpd stop
+  if [ $? != 0 ]; then
+    printf "ERROR: HTTPD shutdown failed.\n"
+    #exitFailure #might have been not running
+  else
+    printf "INFO: HTTPD shutdown successful.\n"
+  fi
+}
+

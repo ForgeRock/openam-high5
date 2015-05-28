@@ -1,0 +1,29 @@
+#!/bin/bash 
+
+#---------------------------------------------
+checkBaseDir() {
+#---------------------------------------------
+  setRCSuccess
+  checkIfDirectoryExists ${OPENAM_BASE}
+  if [ $? == 0 ]; then
+    checkIfDirectoryIsEmpty ${OPENAM_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: The OpenAM installation directory ${OPENAM_BASE} is NOT empty. Aborting.\n"
+      setRCFailure
+    fi
+  fi
+  returnRC
+}
+
+#---------------------------------------------
+waitUntilOpenAMLoadCompleted() {
+#---------------------------------------------
+  until [ "`curl --insecure --silent --show-error --connect-timeout 1 ${OPENAM_TEST_URL} | grep 'Server is ALIVE'`" != "" ];
+  do
+    printf "INFO: Waiting for OpenAM webapplication to be fully loaded in Tomcat (sleep 2).\n"
+    sleep 2
+  done
+  printf "INFO: OpenAM on Tomcat loaded.\n"
+}
+
+

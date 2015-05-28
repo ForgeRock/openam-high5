@@ -1,0 +1,22 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-httpd
+. ./functions-tomcat
+. ./functions-opendj
+
+stopHttpd
+sleep 1
+stopTomcat
+sleep 1
+stopOpenDJ
+sleep 1
+
+startOpenDJ
+sleep 1
+startTomcat
+sleep 1
+startHttpd
+
+

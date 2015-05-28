@@ -1,0 +1,56 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+
+#---------------------------------------------
+checkPrereqs() {
+#---------------------------------------------
+  setRCSuccess
+  checkIfFileExists ${TOMCAT_ZIP}
+  if [ $? != 0 ]; then
+    echo "ERROR: File ${TOMCAT_ZIP} does not exist. Aborting."
+    setRCFailure
+  fi
+  returnRC
+}
+
+#---------------------------------------------
+checkBaseDir() {
+#---------------------------------------------
+  setRCSuccess
+  checkIfDirectoryExists ${TOMCAT_BASE}
+  if [ $? == 0 ]; then
+    checkIfDirectoryIsEmpty ${TOMCAT_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: The Tomcat installation directory ${TOMCAT_BASE} is NOT empty. Aborting.\n"
+      setRCFailure
+    fi 
+  fi
+  returnRC
+}
+
+#---------------------------------------------
+checkAll() {
+#---------------------------------------------
+  checkExecutionDirectory
+  exitIfRCFailure
+
+  checkTools
+  exitIfRCFailure
+
+  checkJava
+  exitIfRCFailure
+
+  checkPrereqs
+  exitIfRCFailure
+
+  checkBaseDir
+  exitIfRCFailure
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+checkAll
+

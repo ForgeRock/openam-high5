@@ -1,0 +1,43 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-tomcat
+
+#---------------------------------------------
+installTomcat() {
+#---------------------------------------------
+  ${UNZIP} -q ${TOMCAT_ZIP} -d ${TOMCAT_BASE}
+  if [ $? != 0 ]; then
+    printf "ERROR: Error unzipping the Tomcat software ${TOMCAT_ZIP} in directory ${TOMCAT_BASE}. Aborting.\n"
+    exitFailure
+  else
+    printf "INFO: Successfully unzipped the Tomcat software in directory ${TOMCAT_BASE}.\n"
+  fi 
+
+  # Rename apache-tomcat-<version> to apache-tomcat
+  ${MV} ${TOMCAT_BASE}/apache-tomcat-* ${TOMCAT_BASE}/apache-tomcat
+  checkIfDirectoryExists ${TOMCAT_BIN_DIR}
+  if [ $? != 0 ]; then
+    printf "ERROR: Error renaming apache-tomcat-<version> to apache-tomcat. Aborting.\n"
+    exitFailure
+  else
+    printf "INFO: Successfully renamed Tomcat install directory and ${TOMCAT_BIN_DIR} exists.\n"
+  fi 
+
+  # Change the file permissions in the bin directory
+  #
+  ${CHMOD} +x ${TOMCAT_BIN_DIR}/*.sh
+  if [ $? != 0 ]; then
+    printf "ERROR: Error making Tomcat scripts executable. Aborting.\n"
+    exitFailure
+  else
+    printf "INFO: Successfully made Tomcat scripts executable.\n"
+  fi 
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+installTomcat
+

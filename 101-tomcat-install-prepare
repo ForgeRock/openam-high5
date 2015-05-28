@@ -1,0 +1,74 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+
+#---------------------------------------------
+checkPrereqs() {
+#---------------------------------------------
+  checkIfFileExists ${TOMCAT_ZIP}
+  if [ $? != 0 ]; then
+    echo "ERROR: File ${TOMCAT_ZIP} does not exist. Aborting."
+    exitFailure
+  fi
+}
+
+#---------------------------------------------
+createBaseDir() {
+#---------------------------------------------
+  checkIfDirectoryExists ${TOMCAT_BASE}
+  if [ $? != 0 ]; then
+    echo "INFO: The Tomcat installation directory ${TOMCAT_BASE} does not exist and will be created."
+    ${MKDIR} -p ${TOMCAT_BASE}
+    RC=$?
+    if [ ${RC} != 0 ]; then
+      printf "ERROR: Problem creating directory ${TOMCAT_BASE} (return code = ${RC}).\n"
+      exitFailure
+    else
+      printf "INFO: Tomcat installation directory ${TOMCAT_BASE} created successfully.\n"
+    fi
+  else 
+    checkIfDirectoryIsEmpty ${TOMCAT_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: The Tomcat installation directory ${TOMCAT_BASE} is NOT empty. Aborting.\n"
+      exitFailure
+    else
+      printf "INFO: The Tomcat installation directory ${TOMCAT_BASE} does exist and is empty.\n"
+    fi 
+  fi
+}
+
+#---------------------------------------------
+stopFirewall() {
+#---------------------------------------------
+  systemctl stop firewalld
+  if [ $? != 0 ]; then
+    printf "WARNING: Error when trying to stop the firewall.\n"
+  else
+    printf "INFO: Successfully stopped the firewall.\n"
+  fi 
+
+  #iptables -I INPUT -p tcp -m tcp --dport ${TOMCAT_HTTP_PORT} -j ACCEPT
+  #if [ $? != 0 ]; then
+  #  printf "WARNING: Could not update iptables settings.\n"
+  #fi 
+  #service iptables save
+  #if [ $? != 0 ]; then
+  #  printf "WARNING: Error saving updated iptables settings.\n"
+  #fi 
+  #service iptables restart
+  #if [ $? != 0 ]; then
+  #  printf "WARNING: Error restarting service iptables.\n"
+  #fi 
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+createBaseDir
+stopFirewall
+
+
+
+
+

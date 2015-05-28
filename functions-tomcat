@@ -1,0 +1,47 @@
+#!/bin/bash -x
+
+#---------------------------------------------
+waitUntilTomcatStartupCompleted() {
+#---------------------------------------------
+  until [ "`curl --insecure --silent --show-error --connect-timeout 1 -I ${TOMCAT_TEST_URL} | grep 'Apache-Coyote'`" != "" ];
+  do
+    printf "INFO: Waiting for Tomcat to complete startup (sleep 5).\n"
+    sleep 5
+  done
+  printf "INFO: Tomcat startup completed.\n"
+}
+
+#---------------------------------------------
+waitUntilTomcatShutdownCompleted() {
+#---------------------------------------------
+  printf "INFO: Waiting for Tomcat to complete shutdown (sleep 5).\n"
+  sleep 5
+  printf "INFO: Tomcat startup completed.\n"
+}
+
+#---------------------------------------------
+startTomcat() {
+#---------------------------------------------
+  export JAVA_HOME=${JAVA_HOME}
+  ${TOMCAT_BIN_DIR}/startup.sh
+  printf "INFO: Tomcat startup return code: $?\n"
+
+  waitUntilTomcatStartupCompleted
+  printf "INFO: Tomcat startup WAIT return code: $?\n"
+}
+
+#---------------------------------------------
+stopTomcat() {
+#---------------------------------------------
+  export JAVA_HOME=${JAVA_HOME}
+  if [ -f ${TOMCAT_BIN_DIR}/shutdown.sh ]; then
+    ${TOMCAT_BIN_DIR}/shutdown.sh
+    printf "INFO: Tomcat shutdown return code: $?\n"
+  else
+    printf "WARNING: Cannot find Tomcat shutdown script. Probably it has not been installed yet. $?\n"
+  fi
+
+  waitUntilTomcatShutdownCompleted
+  printf "INFO: Tomcat shutdown WAIT return code: $?\n"
+}
+

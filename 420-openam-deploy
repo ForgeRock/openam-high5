@@ -1,0 +1,60 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+deployOpenAMOnTomcat() {
+#---------------------------------------------
+
+  if [ ! -f ${OPENAM_WAR} ]; then
+    printf "ERROR: OpenAM WAR file does not exists at ${OPENAM_WAR}. Aborting.\n"
+    exitFailure
+  fi
+
+  if [ ! -d ${TOMCAT_WEBAPPS_DIR} ]; then
+    printf "ERROR: Tomcat webapps directory does not exist at ${TOMCAT_WEBAPPS_DIR}. Aborting.\n"
+    exitFailure
+  fi
+
+  ${CP} ${OPENAM_WAR} ${TOMCAT_WEBAPPS_DIR}/${OPENAM_DEPLOYMENT_URI}.war
+  if [ $? != 0 ]; then
+    printf "ERROR: Error copying openam.war (${OPENAM_WAR}) to Tomcat webapps directory (${TOMCAT_WEBAPPS_DIR}). Aborting.\n"
+    exitFailure
+  else
+    printf "INFO: Successfully copied the openam.war file to Tomcat webapps directory (${TOMCAT_WEBAPPS_DIR}).\n"
+  fi 
+
+  # Move opendj/opendj to just opendj
+  #TOPDIRDS=`ls ${OPENDJ_BASE}`
+  #${MV} ${OPENDJ_BASE}/${TOPDIRDS}/* ${OPENDJ_BASE}
+  #if [ $? != 0 ]; then
+  #  printf "ERROR: Cannot move ${OPENDJ_BASE}/${TOPDIRDS}/* to ${OPENDJ_BASE}. Aborting.\n"
+  #  exitFailure
+  #fi
+
+  #echo "INFO: Installing OpenDJ ..."
+  #CURDIR=`pwd`
+  #cd ${OPENDJ_BASE}
+  #SETUP=${OPENDJ_BASE}/setup
+  #if [ ! -f ${SETUP} ]; then
+  #  printf "ERROR: Script ${SETUP} does not exist. Someting must have gone wrong. Aborting.\n"
+  #  exitFailure
+  #fi
+  #export JAVA_HOME
+  #${SETUP} --cli --no-prompt -b ${OPENDJ_SUFFIX} -a -p ${OPENDJ_LDAP_PORT} --adminConnectorPort ${OPENDJ_ADMIN_PORT} -D ${OPENDJ_ADMIN} -w ${OPENDJ_ADMIN_PASSWORD} -O --acceptLicense
+  #if [ $? != 0 ]; then
+  #  printf "ERROR: OpenDJ setup failed. Aborting.\n"
+  #  exitFailure
+  #else
+  #  printf "INFO: Successfully installed OpenDJ with LDAP port ${OPENDJ_LDAP_PORT} and suffix ${OPENDJ_SUFFIX}.\n"
+  #fi
+  #cd ${CURDIR}
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+deployOpenAMOnTomcat
+

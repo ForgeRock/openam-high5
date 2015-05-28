@@ -1,0 +1,39 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-opendj
+
+#---------------------------------------------
+searchOpenDJ() {
+#---------------------------------------------
+
+  if [ ! -f ${LDAPSEARCH} ]; then
+    printf "ERROR: ldaosearch does not exists at ${LDAPSEARCH}. There must habe been a problem. Aborting.\n"
+    exitFailure
+  fi
+
+  printf "INFO: Searching for root DSE ...\n"
+  ${LDAPSEARCH} -h ${SERVER_FQDN} -p ${OPENDJ_LDAP_PORT} -D ${OPENDJ_ADMIN} -w ${OPENDJ_ADMIN_PASSWORD} -b "" -s base "(objectclass=*)" namingContexts
+  if [ $? != 0 ]; then
+    printf "ERROR: Error executing ldapsearch. Aborting.\n"
+    exitFailure
+  else
+    printf "INFO: Successfully searched the root DSE.\n"
+  fi
+
+  printf "INFO: Searching first level of entries under default suffix ...\n"
+  ${LDAPSEARCH} -h ${SERVER_FQDN} -p ${OPENDJ_LDAP_PORT} -D ${OPENDJ_ADMIN} -w ${OPENDJ_ADMIN_PASSWORD} -b ${OPENDJ_SUFFIX} -s one "(objectclass=*)" 
+  if [ $? != 0 ]; then
+    printf "ERROR: Error executing ldapsearch. Aborting.\n"
+    exitFailure
+  else
+    printf "INFO: Successfully searched first level of entries under suffix ${OPENDJ_SUFFIX}.\n"
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+searchOpenDJ
+

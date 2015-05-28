@@ -1,0 +1,26 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-opendj
+
+#---------------------------------------------
+downloadOpenDJ() {
+#---------------------------------------------
+
+  #
+  # Direct download requires username - password. Need to script this for an automatic download if file not present.
+  #
+
+  if [ ! -f ${OPENDJ_ZIP} ]; then
+    printf "ERROR: OpenDJ zip file not present. Trying to download from ${OPENDJ_DOWNLOAD_URL} (requires username and password) and place it under ${OPENDJ_ZIP}.\n"
+    exitFailure
+  fi
+
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+downloadOpenDJ
+

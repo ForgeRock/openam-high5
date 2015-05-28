@@ -1,0 +1,83 @@
+#!/bin/bash -x
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+extractSsoadm() {
+#---------------------------------------------
+  #
+  # Extract the ssoadm tools
+  #
+  if [ ! -d ${OPENAM_SSOADM_BASE} ]; then
+    ${MKDIR} -p ${OPENAM_SSOADM_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: Error creating OpenAM ssoadm base directory ${OPENAM_SSOADM_BASE}. Aborting.\n"
+      exitFailure
+    fi
+  fi
+
+  ${UNZIP} -q -o ${OPENAM_SSOADM_ZIP} -d ${OPENAM_SSOADM_BASE}
+  if [ $? != 0 ]; then
+    printf "ERROR: Error unzipping the OpenAM ssoadm zip ${OPENAM_SSOADM_ZIP} in directory ${OPENAM_SSOADM_BASE}. Aborting.\n"
+    exitFailure
+  else
+    printf "INFO: Successfully unzipped the OpenAM ssoadm zip in directory ${OPENAM_SSOADM_BASE}.\n"
+  fi
+}
+
+#---------------------------------------------
+setupSsoadm() {
+#---------------------------------------------
+  export JAVA_HOME
+  CURDIR=`pwd`
+  cd ${OPENAM_SSOADM_BASE}
+  ./setup -p ${OPENAM_CONFIG_BASE} --acceptLicense
+  if [ $? != 0 ]; then
+    printf "ERROR: Error setting up ssoadm. Aborting.\n"
+    exitFailure
+  else
+    printf "INFO: Successfully setup OpenAM ssoadm tools at ${OPENAM_SSOADM_BASE}.\n"
+  fi
+  cd ${CURDIR}
+}
+
+#---------------------------------------------
+modifySsoadm() {
+#---------------------------------------------
+  # Add the truststore to the ssoadm calls
+  TOMCAT_KEYSTORE_ESCAPED=`escapePath ${TOMCAT_KEYSTORE}`
+  
+  SSOADM_EXTRA="-D\"javax.net.ssl.trustStore=${TOMCAT_KEYSTORE_ESCAPED}\" -D\"javax.net.ssl.trustStorePassword=${TOMCAT_KEYSTORE_STOREPASS}\""
+
+  # In a site deployment, configure the site to server mapping
+  SERVER_ESCAPED=`escapeURL "https://${SERVER_FQDN}:${TOMCAT_HTTPS_PORT}/${OPENAM_DEPLOYMENT_URI}"`
+  SITE_ESCAPED=`escapeURL "https://${SERVER_FQDN}:${HTTPD_HTTPS_PORT}/${OPENAM_DEPLOYMENT_URI}"`
+
+  SSOADM_EXTRA="${SSOADM_EXTRA} -D\"com.iplanet.am.naming.map.site.to.server=${SITE_ESCAPED}=${SERVER_ESCAPED}\""
+
+  if [ ! -f ${OPENAM_SSOADM}.ORIG ]; then
+    ${CP} ${OPENAM_SSOADM} ${OPENAM_SSOADM}.ORIG
+  fi
+
+  ${SED} -e "s/com.sun.identity.cli.CommandManager/${SSOADM_EXTRA} com.sun.identity.cli.CommandManager/" ${OPENAM_SSOADM} > ${OPENAM_SSOADM}.MODIFIED
+  cp ${OPENAM_SSOADM}.MODIFIED ${OPENAM_SSOADM}
+
+}
+
+#----------------------------------------------------------
+generatePasswordFile() {
+#----------------------------------------------------------
+  echo "${OPENAM_ADMIN_PASSWORD}" > ${OPENAM_SSOADM_PASSFILE}
+  ${CHOWN} ${SYSTEM_USER}:${SYSTEM_GROUP} ${OPENAM_SSOADM_PASSFILE}
+  ${CHMOD} 400 ${OPENAM_SSOADM_PASSFILE}
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+extractSsoadm
+setupSsoadm
+generatePasswordFile
+modifySsoadm

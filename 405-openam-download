@@ -1,0 +1,26 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+downloadOpenAM() {
+#---------------------------------------------
+
+  #
+  # Direct download requires username - password. Need to script this for an automatic download if file not present.
+  #
+
+  if [ ! -f ${OPENAM_ZIP} ]; then
+    printf "ERROR: OpenAM zip file not present. Trying to download from ${OPENAM_DOWNLOAD_URL} (requires username and password) and place it under ${OPENAM_ZIP}.\n"
+    exitFailure
+  fi
+
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+downloadOpenAM
+

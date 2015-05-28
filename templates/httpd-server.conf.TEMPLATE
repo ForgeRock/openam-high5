@@ -1,0 +1,121 @@
+#
+# Global SSL parameters
+# Origin: ssl.conf
+# Note: Make sure not to load the default ssl.conf file
+#
+Listen 443 https
+ServerName %SERVER_FQDN%
+
+##
+##  SSL Global Context
+##
+##  All SSL configuration in this context applies both to
+##  the main server and all SSL-enabled virtual hosts.
+##
+
+#   Pass Phrase Dialog:
+#   Configure the pass phrase gathering process.
+#   The filtering dialog program (`builtin' is a internal
+#   terminal dialog) has to provide the pass phrase on stdout.
+SSLPassPhraseDialog exec:/usr/libexec/httpd-ssl-pass-dialog
+
+#   Inter-Process Session Cache:
+#   Configure the SSL Session Cache: First the mechanism
+#   to use and second the expiring timeout (in seconds).
+SSLSessionCache         shmcb:/run/httpd/sslcache(512000)
+SSLSessionCacheTimeout  300
+
+#   Pseudo Random Number Generator (PRNG):
+#   Configure one or more sources to seed the PRNG of the
+#   SSL library. The seed data should be of good random quality.
+#   WARNING! On some platforms /dev/random blocks if not enough entropy
+#   is available. This means you then cannot use the /dev/random device
+#   because it would lead to very long connection times (as long as
+#   it requires to make more entropy available). But usually those
+#   platforms additionally provide a /dev/urandom device which doesn't
+#   block. So, if available, use this one instead. Read the mod_ssl User
+#   Manual for more details.
+SSLRandomSeed startup file:/dev/urandom  256
+SSLRandomSeed connect builtin
+#SSLRandomSeed startup file:/dev/random  512
+#SSLRandomSeed connect file:/dev/random  512
+#SSLRandomSeed connect file:/dev/urandom 512
+
+#
+# Use "SSLCryptoDevice" to enable any supported hardware
+# accelerators. Use "openssl engine -v" to list supported
+# engine names.  NOTE: If you enable an accelerator and the
+# server does not start, consult the error logs and ensure
+# your accelerator is functioning properly.
+#
+SSLCryptoDevice builtin
+
+
+#
+# Specific deployment parameters
+#
+<VirtualHost *:443>
+	ServerAdmin webmaster@localhost
+
+	# Possible values include: debug, info, notice, warn, error, crit,
+	# alert, emerg.
+	LogLevel debug
+	ErrorLog /var/log/httpd/error.log
+	CustomLog /var/log/httpd/access.log combined
+
+	SSLEngine On
+	SSLOptions +StrictRequire +ExportCertData
+	#SSLProtocol -all +TLSv1 -SSLv2
+	SSLProtocol all +TLSv1 -SSLv3 -SSLv2
+	SSLCipherSuite ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
+
+	SSLCertificateFile %HTTPD_SERVER_CERT_PEM%
+        SSLCertificateKeyFile %HTTPD_SERVER_KEY_PEM%
+
+        SSLCertificateChainFile %HTTPD_SERVER_CERT_CHAIN_PEM%
+        #SSLCACertificateFile %HTTPD_SERVER_CERT_CHAIN_PEM%
+
+	SSLProxyEngine on 
+        RewriteEngine on
+
+	SSLVerifyClient none 
+
+	RewriteEngine on
+        RewriteCond %{REQUEST_URI} ^/$
+
+    <IfModule mod_proxy.c>
+        ProxyRequests Off
+	ProxyPreserveHost On
+
+	<Location /%OPENAM_DEPLOYMENT_URI%>
+		SSLRequireSSL
+		SSLVerifyClient optional
+		SSLVerifyDepth 10
+		SSLRenegBufferSize 262144 
+
+		RequestHeader set SSO_ENV_SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"
+		RequestHeader set SSO_ENV_SSL_CLIENT_I_DN "%{SSL_CLIENT_I_DN}s"
+		RequestHeader append Cookie "SSO_ENV_SSL_CLIENT_V_START=%{SSL_CLIENT_V_START}s"
+		RequestHeader append Cookie "SSO_ENV_SSL_CLIENT_V_END=%{SSL_CLIENT_V_END}s"
+		RequestHeader append Cookie "SSO_ENV_SSL_CLIENT_REVOCATION_STATE=NOT_REVOKED"
+		RequestHeader append Cookie "SSO_ENV_SSL_CLIENT_I_DN=%{SSL_CLIENT_I_DN}s"
+		RequestHeader append Cookie "SSO_ENV_SSL_CLIENT_S_DN=%{SSL_CLIENT_S_DN}s"
+		RequestHeader append Cookie "SSO_ENV_SSL_CLIENT_M_SERIAL=%{SSL_CLIENT_M_SERIAL}s"
+
+                ProxyPass https://%SERVER_FQDN%:%TOMCAT_HTTPS_PORT%/%OPENAM_DEPLOYMENT_URI%
+                ProxyPassReverse https://%SERVER_FQDN%:%TOMCAT_HTTPS_PORT%/%OPENAM_DEPLOYMENT_URI%
+                #ProxyPass https://SERVER-2:8181/suisseid
+                #ProxyPassReverse https://SERVER-2:8181/suisseid
+        </Location>
+
+        <Directory proxy:*>
+	  AddDefaultCharset Off
+	  SSLRequireSSL
+          Order deny,allow
+          Allow from all 
+        </Directory>
+
+        ProxyVia On
+    </IfModule>
+
+</VirtualHost>

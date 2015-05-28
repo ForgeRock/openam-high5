@@ -1,0 +1,53 @@
+#!/bin/bash -x
+
+. ./platform.properties
+. ./functions
+
+#---------------------------------------------
+openamInstall() { 
+#---------------------------------------------
+  #. ${INSTALL_SCRIPTS_BASE}/400-openam-preinstall-check
+  #exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/405-openam-download
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/410-openam-install
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/420-openam-deploy
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/430-openam-configure
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/440-ssoadm-setup
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/480-openam-check
+  exitIfRCFailure
+
+}
+
+#---------------------------------------------
+openamUninstall() { 
+#---------------------------------------------
+  . ${INSTALL_SCRIPTS_BASE}/490-openam-uninstall
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+printScriptStart
+if [ $# == 1 ] && [ $1 == "uninstall" ]; then
+  printf "INFO: Mode is UNINSTALL.\n"
+  openamUninstall
+else
+  openamInstall
+fi
+printScriptEnd
+
+
+
+
+

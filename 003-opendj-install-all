@@ -1,0 +1,47 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+
+#---------------------------------------------
+opendjInstall() { 
+#---------------------------------------------
+  . ${INSTALL_SCRIPTS_BASE}/300-opendj-preinstall-check
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/305-opendj-download
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/310-opendj-install
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/320-opendj-data-load
+  exitIfRCFailure
+
+  . ${INSTALL_SCRIPTS_BASE}/380-opendj-check
+  exitIfRCFailure
+
+}
+
+#---------------------------------------------
+opendjUninstall() { 
+#---------------------------------------------
+  . ${INSTALL_SCRIPTS_BASE}/390-opendj-uninstall
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+printScriptStart
+if [ $# == 1 ] && [ $1 == "uninstall" ]; then
+  printf "INFO: Mode is UNINSTALL.\n"
+  opendjUninstall
+else
+  opendjInstall
+fi
+printScriptEnd
+
+
+
+
+

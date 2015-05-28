@@ -1,0 +1,20 @@
+dn: dc=yellowstone,dc=com
+objectClass: domain
+objectClass: top
+
+dn: ou=people,dc=yellowstone,dc=com
+objectClass: organizationalUnit
+objectClass: top
+
+dn: ou=admins,dc=yellowstone,dc=com
+objectClass: organizationalUnit
+objectClass: top
+
+dn: uid=dude,ou=people,dc=yellowstone,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+sn: Duder
+cn: Dude Duder
+

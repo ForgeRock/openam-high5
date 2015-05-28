@@ -1,0 +1,30 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+. ./functions-opendj
+
+#---------------------------------------------
+removeOpenDJFiles() {
+#---------------------------------------------
+  if [ ! -z ${OPENDJ_BASE} ]; then
+    cd ${OPENDJ_BASE}
+    ${RM} -rf *
+    if [ $? != 0 ]; then
+      printf "ERROR: Error removing data in OpenDJ base directory ${OPENDJ_BASE}. Aborting.\n"
+    else
+      printf "INFO: Successfully removed OpenDJ files from directory ${OPENDJ_BASE}.\n"
+    fi 
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+stopOpenDJ
+removeOpenDJFiles
+
+
+
+
+

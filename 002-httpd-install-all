@@ -1,0 +1,35 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+
+#---------------------------------------------
+httpdInstall() { 
+#---------------------------------------------
+  . ${INSTALL_SCRIPTS_BASE}/220-httpd-configure
+  exitIfRCFailure
+}
+
+#---------------------------------------------
+httpdUninstall() { 
+#---------------------------------------------
+  printf "ERROR: Not supported.\n"
+}
+
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+printScriptStart
+if [ $# == 1 ] && [ $1 == "uninstall" ]; then
+  printf "INFO: Mode is UNINSTALL.\n"
+  httpdUninstall
+else
+  httpdInstall
+fi
+printScriptEnd
+
+
+
+
+

@@ -1,0 +1,52 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+generateSilentConfigurationFile() {
+#---------------------------------------------
+  OPENAM_CONFIG_BASE_ESCAPED=`escapePath ${OPENAM_CONFIG_BASE}`
+
+  ${SED} -e "s/%SERVER_FQDN%/${SERVER_FQDN}/g" \
+	-e "s/%TOMCAT_HTTPS_PORT%/${TOMCAT_HTTPS_PORT}/g" \
+	-e "s/%OPENAM_DEPLOYMENT_URI%/${OPENAM_DEPLOYMENT_URI}/g" \
+	-e "s/%OPENAM_CONFIG_BASE%/${OPENAM_CONFIG_BASE_ESCAPED}/g" \
+	-e "s/%OPENAM_ENCRYPTION_KEY%/${OPENAM_ENCRYPTION_KEY}/g" \
+	-e "s/%OPENAM_ADMIN_PASSWORD%/${OPENAM_ADMIN_PASSWORD}/g" \
+	-e "s/%OPENAM_LDAPADMIN_PASSWORD%/${OPENAM_LDAPADMIN_PASSWORD}/g" \
+	-e "s/%OPENAM_COOKIE_DOMAIN%/${OPENAM_COOKIE_DOMAIN}/g" \
+	-e "s/%OPENAM_DS_PORT%/${OPENAM_DS_PORT}/g" \
+	-e "s/%OPENAM_DS_ADMIN_PORT%/${OPENAM_DS_ADMIN_PORT}/g" \
+	-e "s/%OPENAM_DS_JMX_PORT%/${OPENAM_DS_JMX_PORT}/g" \
+	-e "s/%OPENAM_DS_SUFFIX%/${OPENAM_DS_SUFFIX}/g" \
+	-e "s/%OPENAM_DS_ADMIN%/${OPENAM_DS_ADMIN}/g" \
+	-e "s/%OPENAM_DS_ADMIN_PASSWORD%/${OPENAM_DS_ADMIN_PASSWORD}/g" \
+	-e "s/%OPENDJ_LDAP_PORT%/${OPENDJ_PORT}/g" \
+	-e "s/%OPENDJ_SUFFIX%/${OPENDJ_SUFFIX}/g" \
+	-e "s/%OPENDJ_ADMIN%/${OPENDJ_ADMIN}/g" \
+	-e "s/%OPENDJ_ADMIN_PASSWORD%/${OPENDJ_ADMIN_PASSWORD}/g" \
+	-e "s/%OPENAM_SITE%/${OPENAM_SITE}/g" \
+	-e "s/%HTTPD_HTTPS_PORT%/${HTTPD_HTTPS_PORT}/g" \
+	 ${INSTALL_SCRIPTS_BASE}/templates/openam-configuration.properties.TEMPLATE > ${OPENAM_SILENT_CONFIG_FILE}
+}
+
+#---------------------------------------------
+configureOpenAM() {
+#---------------------------------------------
+  if [ ! -f ${OPENAM_SILENT_CONFIG_FILE} ]; then
+    printf "ERROR: OpenAM silent configuration file does not exist at ${OPENAM_SILENT_CONFIG_FILE}. Aborting.\n"
+    exitFailure
+  fi
+
+  ${JAVA_HOME}/bin/java -Djavax.net.ssl.trustStore=${TOMCAT_KEYSTORE} -Djavax.net.ssl.trustStorePassword=${TOMCAT_KEYSTORE_STOREPASS} -jar ${OPENAM_CONFIGURATOR_JAR} -f ${OPENAM_SILENT_CONFIG_FILE} --acceptLicense
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+generateSilentConfigurationFile
+waitUntilOpenAMLoadCompleted
+configureOpenAM
+

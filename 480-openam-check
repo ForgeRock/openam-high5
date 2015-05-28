@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+checkSsoadm() {
+#---------------------------------------------
+
+  printf "INFO: ssoadm check - trying to list all servers ...\n"
+  ${OPENAM_SSOADM} list-servers -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE}
+  if [ $? != 0 ]; then
+    printf "ERROR: Error retrieving all servers with ssoadm.\n"
+  else
+    printf "INFO: Successfully retrieved list of servers with ssoadm.\n"
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+checkSsoadm
