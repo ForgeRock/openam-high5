@@ -1,0 +1,36 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#----------------------------------------------------------
+createRealm() {
+#----------------------------------------------------------
+  printf "INFO: Creating realm ${OPENAM_BASE_REALM}.\n"
+  ${OPENAM_SSOADM} create-realm -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --realm ${OPENAM_BASE_REALM}
+  if [ $? != 0 ]; then
+    printf "ERROR: Error creating realm ${OPENAM_BASE_REALM}.\n"
+  else
+    printf "INFO: Successfully created realm ${OPENAM_BASE_REALM}.\n"
+  fi
+}
+
+#----------------------------------------------------------
+enableDebugLog() {
+#----------------------------------------------------------
+  printf "INFO: Setting debug log to message.\n"
+  ${OPENAM_SSOADM} update-server-cfg -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE}  --attributevalues com.iplanet.services.debug.level=message --servername https://${SERVER_FQDN}:${TOMCAT_HTTPS_PORT}/${OPENAM_DEPLOYMENT_URI} 
+  if [ $? != 0 ]; then
+    printf "ERROR: Error setting debug log to message.\n"
+  else
+    printf "INFO: Successfully set debug log to message.\n"
+  fi
+}
+
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+createRealm
+enableDebugLog

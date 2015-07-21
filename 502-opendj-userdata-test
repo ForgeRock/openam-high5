@@ -1,0 +1,40 @@
+#!/bin/bash -x
+
+. ./platform.properties
+. ./functions
+. ./functions-opendj
+
+LDAPSEARCH=${OPENDJ_BASE}/bin/ldapsearch
+LDAPMODIFY=${OPENDJ_BASE}/bin/ldapmodify
+DSCONFIG=${OPENDJ_BASE}/bin/dsconfig
+
+#---------------------------------------------
+getDefaultPasswordPolicy() {
+#---------------------------------------------
+  ${DSCONFIG} get-password-policy-prop --port ${OPENDJ_ADMIN_PORT} --hostname localhost --bindDN ${OPENDJ_ADMIN} --bindPassword ${OPENDJ_ADMIN_PASSWORD} --trustAll --no-prompt --policy-name "Default Password Policy" --advanced
+}
+
+#---------------------------------------------
+searchDudeUser() {
+#---------------------------------------------
+  ${LDAPSEARCH} -h localhost -p ${OPENDJ_LDAP_PORT} -D ${OPENDJ_ADMIN} -w ${OPENDJ_ADMIN_PASSWORD} -b ${OPENDJ_SUFFIX} -s sub "uid=dude" pwdChangedTime
+}
+
+#---------------------------------------------
+modifyPasswordDudeUser() {
+#---------------------------------------------
+  ${LDAPMODIFY} -h localhost -p ${OPENDJ_LDAP_PORT} -D ${OPENDJ_ADMIN} -w ${OPENDJ_ADMIN_PASSWORD} << EOF
+dn: uid=dude,ou=people,dc=yellowstone,dc=com
+changetype: modify
+replace: userPassword
+userPassword: password
+
+EOF
+
+}
+
+searchDudeUser
+modifyPasswordDudeUser
+searchDudeUser
+#getDefaultPasswordPolicy
+

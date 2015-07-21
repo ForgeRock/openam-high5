@@ -1,0 +1,60 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+checkPrereqs() {
+#---------------------------------------------
+  setRCSuccess
+  checkIfFileExists ${OPENDJ_ZIP}
+  if [ $? != 0 ]; then
+    echo "ERROR: File ${OPENDJ_ZIP} does not exist. Aborting."
+    setRCFailure
+  fi
+  returnRC
+}
+
+#---------------------------------------------
+checkAll() {
+#---------------------------------------------
+  #checkExecutionDirectory
+  #exitIfRCFailure
+
+  #checkTools
+  #exitIfRCFailure
+
+  #checkJava
+  #exitIfRCFailure
+
+  #checkPrereqs
+  #exitIfRCFailure
+
+  #checkBaseDir
+  #exitIfRCFailure
+
+  isPortAvailable ${OPENAM_DS_PORT} 
+  if [ $? != 0  ]; then
+    printf "ERROR: Port ${OPENAM_DS_PORT} is not available. Aborting.\n";
+    exitFailure
+  fi
+
+  isPortAvailable ${OPENAM_DS_ADMIN_PORT} 
+  if [ $? != 0  ]; then
+    printf "ERROR: Port ${OPENAM_DS_ADMIN_PORT} is not available. Aborting.\n";
+    exitFailure
+  fi
+
+  isPortAvailable ${OPENAM_DS_JMX_PORT} 
+  if [ $? != 0  ]; then
+    printf "ERROR: Port ${OPENDJ_DS_JMX_PORT} is not available. Aborting.\n";
+    exitFailure
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+checkAll
+

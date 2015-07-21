@@ -1,0 +1,9 @@
+#Remove authentication chain
+delete-auth-cfgs --realm %OPENAM_BASE_REALM% --names %PCOOKIE_AUTH_CHAIN%
+
+#Remove authentication module instance
+delete-auth-instances --realm %OPENAM_BASE_REALM% --names %PCOOKIE_AUTH_MODULE%  
+
+#Remove post authentication class 
+remove-svc-attrs --servicename iPlanetAMAuthService --realm %OPENAM_BASE_REALM% --attributevalues iplanet-am-auth-post-login-process-class=org.forgerock.openam.authentication.modules.persistentcookie.PersistentCookieAuthModule
+
