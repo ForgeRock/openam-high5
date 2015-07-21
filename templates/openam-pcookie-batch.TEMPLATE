@@ -5,7 +5,7 @@ create-auth-instance --realm %OPENAM_BASE_REALM% --name %PCOOKIE_AUTH_MODULE% --
 create-auth-cfg --realm %OPENAM_BASE_REALM% --name %PCOOKIE_AUTH_CHAIN%
 
 #Configure post authentication class for persistent cookie
-set-svc-attrs --servicename iPlanetAMAuthService --realm %OPENAM_BASE_REALM% --attributevalues iplanet-am-auth-post-login-process-class=org.forgerock.openam.authentication.modules.persistentcookie.PersistentCookieAuthModule
+set-svc-attrs --servicename iPlanetAMAuthService --realm %OPENAM_BASE_REALM% --attributevalues iplanet-am-auth-post-login-process-class=%OPENAM_PCOOKIE_CLASS%
 
 #Add authentication modules to chain
 add-auth-cfg-entr --realm %OPENAM_BASE_REALM% --name %PCOOKIE_AUTH_CHAIN% --modulename %PCOOKIE_AUTH_MODULE% --criteria SUFFICIENT --position 1

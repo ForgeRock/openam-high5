@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 #---------------------------------------------
 waitUntilTomcatStartupCompleted() {
@@ -42,6 +42,15 @@ stopTomcat() {
   fi
 
   waitUntilTomcatShutdownCompleted
+
+  PROCS=`${PS} -ef | ${GREP} java | ${GREP} tomcat | ${AWK} '{print $2}' | ${XARGS} echo`
+  #echo "PROCS=${PROCS}"
+
+  if [ ! -z "${PROCS}" ]; then
+    printf "WARNING: There is/are still (a) Tomcat process(es) with PID(s) ${PROCS}. It/they will be terminated the hard way.\n"
+    ${PS} -ef | ${GREP} java | ${GREP} tomcat | ${AWK} '{print $2}' | ${XARGS} kill -9
+  fi
+
   printf "INFO: Tomcat shutdown WAIT return code: $?\n"
 }
 
