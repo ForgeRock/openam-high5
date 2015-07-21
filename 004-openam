@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash 
 
 . ./platform.properties
 . ./functions
@@ -9,6 +9,9 @@ openamInstall() {
   #. ${INSTALL_SCRIPTS_BASE}/400-openam-preinstall-check
   #exitIfRCFailure
 
+  . ${INSTALL_SCRIPTS_BASE}/400-openam-preinstall-check
+  exitIfRCFailure
+  
   . ${INSTALL_SCRIPTS_BASE}/405-openam-download
   exitIfRCFailure
 

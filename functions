@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 RETURN_SUCCESS=0
 RETURN_FAILURE=1
@@ -24,7 +24,11 @@ CHOWN=/bin/chown
 CHMOD=/bin/chmod
 CP=/bin/cp
 WGET=/bin/wget
-TOOLS="${MKDIR} ${UNZIP} ${TAR} ${CHMOD} ${PWD} ${RM} ${CURL} ${OPENSSL} ${MV} ${CP} ${SED} ${DATE} ${NETSTAT} ${GREP} ${CHOWN} ${CHMOD} ${CP} ${WGET}"
+AWK=/bin/awk
+LSOF=/sbin/lsof
+#JQ=/bin/jq
+JQ=/opt/misc/jq
+TOOLS="${MKDIR} ${UNZIP} ${TAR} ${CHMOD} ${PWD} ${RM} ${CURL} ${OPENSSL} ${MV} ${CP} ${SED} ${DATE} ${NETSTAT} ${GREP} ${CHOWN} ${CHMOD} ${CP} ${WGET} ${AWK} ${LSOF}"
 
 #
 # Return code handling: Always set the _RC variable in the
@@ -259,10 +263,13 @@ printScriptEnd(){
 isPortAvailable() {
 #----------------------------------------------------------
   PORT=$1
-  ${NETSTAT} -an | ${GREP} ${PORT} | ${GREP} LISTEN
+  #${NETSTAT} -an | ${GREP} '\:${PORT}\ " | ${GREP} LISTEN <-- if 54444 is used, 4444 is detected as used, too
+  #${NETSTAT} -lnt | ${AWK} '$6 == "LISTEN" && $4 ~ ".\\:'${PORT}'"'
+  ${LSOF} -i:${PORT}
   if [ $? = 1 ]; then
     returnSuccess
   else
     returnFailure
   fi
 }
+

@@ -7,6 +7,7 @@
 #---------------------------------------------
 removeTomcatFiles() {
 #---------------------------------------------
+  CURDIR=`pwd` 
   if [ ! -z ${TOMCAT_BASE} ]; then
     cd ${TOMCAT_BASE}
     ${RM} -rf *
@@ -16,6 +17,7 @@ removeTomcatFiles() {
       printf "INFO: Successfully removed Tomcat files from directory ${TOMCAT_BASE}.\n"
     fi 
   fi
+  cd ${CURDIR}
 }
 
 #---------------------------------------------

@@ -2,6 +2,7 @@
 
 . ./platform.properties
 . ./functions
+. ./functions-tomcat
 . ./functions-openam
 
 #---------------------------------------------
@@ -40,13 +41,15 @@ configureOpenAM() {
     exitFailure
   fi
 
-  ${JAVA_HOME}/bin/java -Djavax.net.ssl.trustStore=${TOMCAT_KEYSTORE} -Djavax.net.ssl.trustStorePassword=${TOMCAT_KEYSTORE_STOREPASS} -jar ${OPENAM_CONFIGURATOR_JAR} -f ${OPENAM_SILENT_CONFIG_FILE} --acceptLicense
+  ${JAVA_HOME}/bin/java -Djavax.net.ssl.trustStore=${TOMCAT_KEYSTORE} -Djavax.net.ssl.trustStorePassword=${TOMCAT_KEYSTORE_STOREPASS} -jar ${OPENAM_CONFIGURATOR_JAR} -f ${OPENAM_SILENT_CONFIG_FILE} --acceptLicense -v 
 }
 
 #---------------------------------------------
 # Main
 #---------------------------------------------
 generateSilentConfigurationFile
-waitUntilOpenAMLoadCompleted
+waitUntilOpenAMPreConfigureLoadCompleted
 configureOpenAM
+stopTomcat
+startTomcat
 

@@ -5,8 +5,17 @@
 -- ssoadm: Before install, check if OpenAM is installed 
 -- configure external datastore and LDAP authentication module
 
+- OpenAM - REST
+-- Generate JWT token to test authentication via Callbacks
+-- Document install of jq
+-- Proper sequence in 501 script
+
 - Tomcat
 -- Set JVM parameters in platform.properties, i.e. heap sizes
+
+
+
+======================================
 
 - Define use case w/ openAM
 

@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash  -x
 
 #---------------------------------------------
 checkBaseDir() {
@@ -13,6 +13,17 @@ checkBaseDir() {
     fi
   fi
   returnRC
+}
+
+#---------------------------------------------
+waitUntilOpenAMPreConfigureLoadCompleted() {
+#---------------------------------------------
+  until [ "`curl --insecure --silent --show-error --connect-timeout 1 ${OPENAM_TEST_URL_PRE_CONFIGURE} | grep 'Configuration Options'`" != "" ];
+  do
+    printf "INFO: Waiting for OpenAM webapplication to be fully loaded in Tomcat before configuration (sleep 2).\n"
+    sleep 2
+  done
+  printf "INFO: OpenAM on Tomcat loaded (pre configuration).\n"
 }
 
 #---------------------------------------------

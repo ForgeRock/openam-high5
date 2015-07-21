@@ -18,6 +18,31 @@ checkSsoadm() {
 }
 
 #---------------------------------------------
+checkRestAuth() {
+#---------------------------------------------
+  REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate
+
+  printf "INFO: Authentication via REST check as user demo ...\n"
+  ${CURL} --insecure --request POST --header "X-OpenAM-Username: demo" --header "X-OpenAM-Password: wrongchangeit" --header "Content-Type: application/json" --data "{}" ${REST_AUTH_URL}
+  printf "\n"
+  if [ $? != 0 ]; then
+    printf "ERROR: Error authenticating as user demo via REST.\n"
+  else
+    printf "INFO: Successfully authenicated as user demo via REST.\n"
+  fi
+
+  printf "INFO: Authentication via REST check as user ${OPENAM_ADMIN} ...\n"
+  ${CURL} --insecure --request POST --header "X-OpenAM-Username: ${OPENAM_ADMIN}" --header "X-OpenAM-Password: ${OPENAM_ADMIN_PASSWORD}" --header "Content-Type: application/json" --data "{}" ${REST_AUTH_URL}
+  printf "\n"
+  if [ $? != 0 ]; then
+    printf "ERROR: Error authenticating as user ${OPENAM_ADMIN} via REST.\n"
+  else
+    printf "INFO: Successfully authenicated as user ${OPENAM_ADMIN} via REST.\n"
+  fi
+}
+
+#---------------------------------------------
 # Main
 #---------------------------------------------
 checkSsoadm
+checkRestAuth

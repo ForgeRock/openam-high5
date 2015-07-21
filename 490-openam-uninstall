@@ -2,6 +2,7 @@
 
 . ./platform.properties
 . ./functions
+. ./functions-tomcat
 . ./functions-openam
 
 #---------------------------------------------
@@ -18,11 +19,22 @@ removeOpenAMFiles() {
 }
 
 #---------------------------------------------
+removeOpenAMWebApplication() {
+#---------------------------------------------
+  DEPLOY_DIR=${TOMCAT_WEBAPPS_DIR}/${OPENAM_DEPLOYMENT_URI}
+  if [ ! -z ${DEPLOY_DIR} ]; then
+    ${RM} -rf ${DEPLOY_DIR}
+    if [ $? != 0 ]; then
+      printf "ERROR: Error removing OpenAM web application from Tomcat (base directory is ${DEPLOY_DIR}). Aborting.\n"
+    else
+      printf "INFO: Successfully removed OpenAM web application from Tomcat.\n"
+    fi 
+  fi
+}
+
+#---------------------------------------------
 # Main
 #---------------------------------------------
+removeOpenAMWebApplication
 removeOpenAMFiles
-
-
-
-
 
