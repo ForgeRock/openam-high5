@@ -34,6 +34,16 @@ startTomcat() {
 stopTomcat() {
 #---------------------------------------------
   export JAVA_HOME=${JAVA_HOME}
+
+  #
+  # Check if Tomcat is running
+  #
+  PROCS=`${PS} -ef | ${GREP} java | ${GREP} tomcat | ${AWK} '{print $2}' | ${XARGS} echo`
+  if [ -z "${PROCS}" ]; then
+    printf "INFO: Tomcat not running. Stop operation aborted.\n"
+    return
+  fi
+
   if [ -f ${TOMCAT_BIN_DIR}/shutdown.sh ]; then
     ${TOMCAT_BIN_DIR}/shutdown.sh
     printf "INFO: Tomcat shutdown return code: $?\n"
@@ -53,4 +63,3 @@ stopTomcat() {
 
   printf "INFO: Tomcat shutdown WAIT return code: $?\n"
 }
-
