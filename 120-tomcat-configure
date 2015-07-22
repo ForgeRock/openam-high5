@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 . ./platform.properties
 . ./functions
@@ -62,10 +62,39 @@ modifyTomcatConfig() {
 }
 
 #---------------------------------------------
+setJavaHome() {
+#---------------------------------------------
+  #
+  # Backup catalina.sh
+  #
+  CATALINA_SH_BACKUP=${TOMCAT_BIN_DIR}/catalina.sh.orig
+  if [ -f ${TOMCAT_BIN_DIR}/catalina.sh ]; then
+    if [ -f ${CATALINA_SH_BACKUP} ]; then
+      printf "INFO: The ${CATALINA_SH_BACKUP} already exists. The tomcat catalina.sh will not be backed up again.\n"
+    else 
+      ${CP} -p ${TOMCAT_BIN_DIR}/catalina.sh ${CATALINA_SH_BACKUP}
+      printf "INFO: Tomcat catalina.sh backed up to ${CATALINA_SH_BACKUP}.\n"
+    fi
+  fi
+
+  #
+  # Set JAVA_HOME in catalina.sh
+  #
+  JAVA_HOME_ESCAPED=`escapePath ${JAVA_HOME}`
+
+  ${SED} -i "2iJAVA_HOME=${JAVA_HOME_ESCAPED}\n" ${TOMCAT_BIN_DIR}/catalina.sh
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    "WARNING: SED returned error ${RC}\n"
+  fi
+}
+
+#---------------------------------------------
 # Main
 #---------------------------------------------
 copyServerCert
 modifyTomcatConfig
+setJavaHome
 stopTomcat
 startTomcat
 
