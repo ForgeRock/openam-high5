@@ -1,16 +1,16 @@
-dn: dc=yellowstone,dc=com
+dn: dc=stone,dc=com
 objectClass: domain
 objectClass: top
 
-dn: ou=people,dc=yellowstone,dc=com
+dn: ou=people,dc=stone,dc=com
 objectClass: organizationalUnit
 objectClass: top
 
-dn: ou=admins,dc=yellowstone,dc=com
+dn: ou=admins,dc=stone,dc=com
 objectClass: organizationalUnit
 objectClass: top
 
-dn: uid=dude,ou=people,dc=yellowstone,dc=com
+dn: uid=dude,ou=people,dc=stone,dc=com
 objectClass: inetOrgPerson
 objectClass: organizationalPerson
 objectClass: person
