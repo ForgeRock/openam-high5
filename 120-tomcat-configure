@@ -3,41 +3,38 @@
 . ./platform.properties
 . ./functions
 . ./functions-tomcat
+. ./ca/ca.properties
 
 #---------------------------------------------
-generateServerCert() {
+copyServerCert() {
 #---------------------------------------------
-  ${OPENSSL} genrsa -out ${TOMCAT_SERVER_KEY_PEM} 2048
-  if [ $? != 0 ]; then
-    printf "ERROR: Failed to generate server key.\n"
-    exitFailure
+
+  KEY_FILE=${CA_SSL_SERVER_CERT_DIR}/${SERVER_FQDN}-key-no-pin.pem
+  P12_FILE=${CA_SSL_SERVER_CERT_DIR}/${SERVER_FQDN}-key.p12
+  JKS_FILE=${CA_SSL_SERVER_CERT_DIR}/${SERVER_FQDN}-key.jks
+  CERT_FILE=${CA_SSL_SERVER_CERT_DIR}/${SERVER_FQDN}-cert.pem
+
+  if [ ! -f ${KEY_FILE} ]; then
+    printf "ERROR: Key file ${KEY_FILE} does not exist. You must create it first. Check the ca section.\n"
+    exit 1 
+  fi
+  if [ ! -f ${CERT_FILE} ]; then
+    printf "ERROR: Certificate file ${CERT_FILE} does not exist. You must create it first. Check the ca section.\n"
+    exit 1 
+  fi
+  if [ ! -f ${P12_FILE} ]; then
+    printf "ERROR: Key file ${P12_FILE} does not exist. You must create it first. Check the ca section.\n"
+    exit 1 
+  fi
+  if [ ! -f ${JKS_FILE} ]; then
+    printf "ERROR: Key file ${JKS_FILE} (Java Keystore) does not exist. You must create it first. Check the ca section.\n"
+    exit 1 
   fi
 
-  ${OPENSSL} req -new -x509 -key ${TOMCAT_SERVER_KEY_PEM} -out ${TOMCAT_SERVER_CERT_PEM} -days 3650 -subj "/CN=${SERVER_FQDN}" -sha256
-  if [ $? != 0 ]; then
-    printf "ERROR: Failed to generate self signed server certificate.\n"
-    exitFailure
-  fi
-
-  #Convert to .p12
-  ${OPENSSL} pkcs12 -export -in ${TOMCAT_SERVER_CERT_PEM} -inkey ${TOMCAT_SERVER_KEY_PEM} -out ${TOMCAT_SERVER_KEY_P12} -name ${SERVER_FQDN} -passout pass:${TOMCAT_SERVER_KEY_PIN}
-
-  #Generate Java Keystore and import key
-  if [ ! -f ${TOMCAT_KEYSTORE} ]; then
-    ${KEYTOOL} -genkey -alias foo -keystore ${TOMCAT_KEYSTORE} -storepass ${TOMCAT_KEYSTORE_STOREPASS} -dname cn=foo -keypass bogusbogus
-    ${KEYTOOL} -delete -alias foo -keystore ${TOMCAT_KEYSTORE} -storepass ${TOMCAT_KEYSTORE_STOREPASS}
-  fi
-
-  ${KEYTOOL} -importkeystore -srckeystore ${TOMCAT_SERVER_KEY_P12} -srcstoretype pkcs12 -srcalias ${SERVER_FQDN} -srcstorepass ${TOMCAT_SERVER_KEY_PIN} -destkeystore ${TOMCAT_KEYSTORE} -deststoretype jks -deststorepass ${TOMCAT_KEYSTORE_STOREPASS} -destalias ${SERVER_FQDN} -noprompt 
-  if [ $? != 0 ]; then
-    printf "WARNING: Failed to import server key into keystore at ${TOMCAT_KEYSTORE}.\n"
-    # exitFailure
-  fi
-
-  printf "INFO: Listing content of keystore ${TOMCAT_KEYSTORE}:\n"
-  ${KEYTOOL} -list -keystore ${TOMCAT_KEYSTORE} -storepass ${TOMCAT_KEYSTORE_STOREPASS}
-
-  printf "INFO: Successfully generated server key (${TOMCAT_SERVER_KEY_PEM}) and server certificate (${TOMCAT_SERVER_CERT_PEM}).\n"
+  ${CP} ${KEY_FILE} ${TOMCAT_SERVER_KEY_PEM}
+  ${CP} ${CERT_FILE} ${TOMCAT_SERVER_CERT_PEM}
+  ${CP} ${P12_FILE} ${TOMCAT_SERVER_KEY_P12}
+  ${CP} ${JKS_FILE} ${TOMCAT_KEYSTORE}
 }
 
 #---------------------------------------------
@@ -67,7 +64,7 @@ modifyTomcatConfig() {
 #---------------------------------------------
 # Main
 #---------------------------------------------
-generateServerCert
+copyServerCert
 modifyTomcatConfig
 stopTomcat
 startTomcat

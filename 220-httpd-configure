@@ -3,37 +3,34 @@
 . ./platform.properties
 . ./functions
 . ./functions-httpd
+. ./ca/ca.properties
 
 #---------------------------------------------
-generateServerCert() {
+copyServerCert() {
 #---------------------------------------------
-  ${OPENSSL} genrsa -out ${HTTPD_SERVER_KEY_PEM} 2048
-  if [ $? != 0 ]; then
-    printf "ERROR: Failed to generate server key.\n"
-    exitFailure
+
+  KEY_FILE=${CA_SSL_SERVER_CERT_DIR}/${SERVER_FQDN}-key-no-pin.pem
+  P12_FILE=${CA_SSL_SERVER_CERT_DIR}/${SERVER_FQDN}-key.p12
+  CERT_FILE=${CA_SSL_SERVER_CERT_DIR}/${SERVER_FQDN}-cert.pem
+  CERT_CHAIN=${CA_SSL_SERVER_CERT_DIR}/../${CA_CERT}
+
+  if [ ! -f ${KEY_FILE} ]; then
+    printf "ERROR: Key file ${KEY_FILE} does not exist. You must create it first. Check the ca section.\n"
+    exit 1 
+  fi
+  if [ ! -f ${CERT_FILE} ]; then
+    printf "ERROR: Certificate file ${CERT_FILE} does not exist. You must create it first. Check the ca section.\n"
+    exit 1 
+  fi
+  if [ ! -f ${CERT_CHAIN} ]; then
+    printf "ERROR: Certificate chain file ${CERT_CHAIN} does not exist. Check the ca section.\n"
+    exit 1 
   fi
 
-  ${OPENSSL} req -new -x509 -key ${HTTPD_SERVER_KEY_PEM} -out ${HTTPD_SERVER_CERT_PEM} -days 3650 -subj "/CN=${SERVER_FQDN}" -sha256
-  if [ $? != 0 ]; then
-    printf "ERROR: Failed to generate self signed server certificate.\n"
-    exitFailure
-  fi
-
-  #Convert to .p12
-  ${OPENSSL} pkcs12 -export -in ${HTTPD_SERVER_CERT_PEM} -inkey ${HTTPD_SERVER_KEY_PEM} -out ${HTTPD_SERVER_KEY_P12} -name ${SERVER_FQDN} -passout pass:${HTTPD_SERVER_KEY_PIN}
-  if [ $? != 0 ]; then
-    printf "ERROR: Failed to generate self signed (HTTPD) server certificate.\n"
-    exitFailure
-  fi
-
-  printf "INFO: Successfully generated server key (${HTTPD_SERVER_KEY_PEM}) and server certificate (${HTTPD_SERVER_CERT_PEM}).\n"
-}
-
-#---------------------------------------------
-generateServerCertChain() {
-#---------------------------------------------
-  #${OPENSSL} verify -CAfile ${HTTPD_SERVER_CERT_CHAIN_PEM} ${HTTPD_SERVER_CERT_PEM}
-  cat ${HTTPD_SERVER_CERT_PEM} >> ${HTTPD_SERVER_CERT_CHAIN_PEM}
+  ${CP} ${KEY_FILE} ${HTTPD_SERVER_KEY_PEM}
+  ${CP} ${CERT_FILE} ${HTTPD_SERVER_CERT_PEM}
+  ${CP} ${P12_FILE} ${HTTPD_SERVER_KEY_P12}
+  ${CP} ${CERT_CHAIN} ${HTTPD_SERVER_CERT_CHAIN_PEM}
 }
 
 #---------------------------------------------
@@ -61,8 +58,7 @@ modifyHttpdConfig() {
 #---------------------------------------------
 # Main
 #---------------------------------------------
-generateServerCert
-generateServerCertChain
+copyServerCert
 modifyHttpdConfig
 stopHttpd
 startHttpd
