@@ -1,0 +1,16 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+
+CURDATE=`${DATE} '+%Y%m%d%H%M%S'`
+echo $CURDATE
+
+OUTFILE_FILE=serverconfig.xml.${CURDATE}
+
+printf "INFO: Exporting OpenAM config to file ${OUTFILE_FILE}.\n"
+${OPENAM_SSOADM} export-svc-cfg --adminid amadmin --password-file ${OPENAM_SSOADM_PASSFILE} --outfile ${OUTFILE_FILE} --encryptsecret ${OPENAM_ENCRYPTION_KEY}
+RC=$?
+if [ ${RC} != 0 ]; then
+  printf "ERROR: ssoadm returned error ${RC}.\n"
+fi
