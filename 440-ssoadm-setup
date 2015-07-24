@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 . ./platform.properties
 . ./functions
@@ -33,7 +33,7 @@ setupSsoadm() {
   export JAVA_HOME
   CURDIR=`pwd`
   cd ${OPENAM_SSOADM_BASE}
-  ./setup -p ${OPENAM_CONFIG_BASE} --acceptLicense
+  ./setup --path ${OPENAM_CONFIG_BASE} --debug ${OPENAM_SSOADM_BASE}/debug --acceptLicense 
   if [ $? != 0 ]; then
     printf "ERROR: Error setting up ssoadm. Aborting.\n"
     exitFailure
