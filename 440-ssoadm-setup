@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash 
 
 . ./platform.properties
 . ./functions
@@ -49,7 +49,7 @@ modifySsoadm() {
   # Add the truststore to the ssoadm calls
   TOMCAT_KEYSTORE_ESCAPED=`escapePath ${TOMCAT_KEYSTORE}`
   
-  SSOADM_EXTRA="-D\"javax.net.ssl.trustStore=${TOMCAT_KEYSTORE_ESCAPED}\" -D\"javax.net.ssl.trustStorePassword=${TOMCAT_KEYSTORE_STOREPASS}\""
+  SSOADM_EXTRA="-D\"javax.net.ssl.trustStore=${TOMCAT_KEYSTORE_ESCAPED}\" -D\"javax.net.ssl.trustStorePassword=${TOMCAT_KEYSTORE_STOREPASS}\" -Dcom.iplanet.services.debug.level=message"
 
   # In a site deployment, configure the site to server mapping
   SERVER_ESCAPED=`escapeURL "https://${SERVER_FQDN}:${TOMCAT_HTTPS_PORT}/${OPENAM_DEPLOYMENT_URI}"`
