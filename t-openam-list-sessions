@@ -1,0 +1,11 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+
+printf "INFO: Listing OpenAM sessions.\n"
+${OPENAM_SSOADM} list-sessions --adminid ${OPENAM_ADMIN} --password-file ${OPENAM_SSOADM_PASSFILE} --host https://${SERVER_FQDN}:${TOMCAT_HTTPS_PORT}
+RC=$?
+if [ ${RC} != 0 ]; then
+  printf "ERROR: ssoadm returned error ${RC}.\n"
+fi
