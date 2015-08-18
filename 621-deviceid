@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 . ./platform.properties
 . ./functions
@@ -44,7 +44,7 @@ checkRestAuthCallbacks() {
   printf "INFO: [Step 2] Authentication via REST (callbacks) as ${USER} ...\n"
   printf "=============================================================\n"
   #Working with module DataStore  
-  RES2=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "DataStore1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "demo" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "changeit" } ] } ] }' ${REST_AUTH_URL}`
+  RES2=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "DataStore1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "'${USER}'" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "changeit" } ] } ] }' ${REST_AUTH_URL}`
   RC=$?
   if [ ${RC} != 0 ]; then
     printf "ERROR: ssoadm returned ${RC}.\n"
@@ -91,14 +91,14 @@ checkRestAuthCallbacks() {
 
   # --------------------------------------------------------------------------------
   #
-  # Forth send in the credentials as required by DataStore module (2nd pass)
+  # Forth send in the credentials as required by LDAP module (2nd factor)
   #
   # --------------------------------------------------------------------------------
   printf "=============================================================\n"
   printf "INFO: [Step 4] Authentication via REST (callbacks) as ${USER} ...\n"
   printf "=============================================================\n"
   #Working with module LDAP
-  RES4=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "LDAP1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "demo" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "changeit" } ] } ] }' ${REST_AUTH_URL}`
+  RES4=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "LDAP1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "'${USER}'" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "'${PASSWORD}'" } ] } ] }' ${REST_AUTH_URL}`
 
   RC=$?
   if [ ${RC} != 0 ]; then
@@ -108,12 +108,51 @@ checkRestAuthCallbacks() {
     printf "INFO: [Response] ${RES4}\n"
   fi
   SSO_TOKEN=`echo ${RES4} | /opt/misc/jq --raw-output '.tokenId'`
-  if [ ! -z ${SSO_TOKEN} ]; then
+  if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
     printf "INFO: Authentication successful. No need for further modules.\n"
     printf "INFO: SSO token is ${SSO_TOKEN}\n"
     exit 0
   else
-    printf "INFO: Authentication failed.\n"
+    CALLBACKS=`echo ${RES4} | /opt/misc/jq --raw-output '.callbacks'`
+    if [ ! -z "${CALLBACKS}" ] && [ "${CALLBACKS}" != "null" ]; then
+      printf "INFO: Callbacks returned. Assuming this is to get consent to store the device permanently.\n"
+    else
+      printf "INFO: Authentication failed.\n"
+      exit 1
+    fi		
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # Fifth send the consent to store the trusted device information 
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 5] Consent to store the trusted device information  ...\n"
+  printf "=============================================================\n"
+  #Working with module LDAP
+  RES5=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "DeviceSave2", "callbacks": [ { "type": "ChoiceCallback", "input": [ { "name": "IDToken1", "value": "1" } ] } ] }' ${REST_AUTH_URL}`
+
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    exit 1
+  else
+    printf "INFO: [Response] ${RES5}\n"
+  fi
+  SSO_TOKEN=`echo ${RES5} | /opt/misc/jq --raw-output '.tokenId'`
+  if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
+    printf "INFO: Authentication successful. No need for further modules.\n"
+    printf "INFO: SSO token is ${SSO_TOKEN}\n"
+    exit 0
+  else
+    CALLBACKS=`echo ${RES5} | /opt/misc/jq --raw-output '.callbacks'`
+    if [ ! -z "${CALLBACKS}" ] && [ "${CALLBACKS}" != "null" ]; then
+      printf "INFO: Callbacks returned. Assuming this is to get consent to store the device permanently.\n"
+    else
+      printf "INFO: Authentication failed.\n"
+      exit 1
+    fi		
   fi
 
 }
@@ -144,7 +183,7 @@ authLDAP() {
   printf "INFO: Authentication via REST (callbacks) as ${USER} against realm ${OPENAM_DEVICEID_REALM} and module LDAP...\n"
   printf "=============================================================\n"
   #Working with module LDAP
-  RES4=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "LDAP1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "demo" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "changeit" } ] } ] }' ${REST_AUTH_URL}`
+  RES4=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "LDAP1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "demo" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "'${PASSWORD}'" } ] } ] }' ${REST_AUTH_URL}`
 
   RC=$?
   if [ ${RC} != 0 ]; then
@@ -158,34 +197,8 @@ authLDAP() {
 }
 
 #---------------------------------------------
-authDeviceIdSave() {
-#---------------------------------------------
-  USER=$1
-  PASSWORD=$2
-
-  REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate?realm=/${OPENAM_DEVICEID_REALM}\&module=LDAP\&authIndexType=service\&authIndexValue=deviceidsavechain
-
-  printf "=============================================================\n"
-  printf "INFO: Getting JWT_Token ...\n"
-  printf "=============================================================\n"
-  RES1=`${CURL} -s --insecure --request POST --header \"Content-Type: application/json\" ${REST_AUTH_URL}`
-  RC=$?
-  if [ ${RC} != 0 ]; then
-    printf "ERROR: ssoadm returned ${RC}.\n"
-    exit 1
-  else
-    printf "INFO: [Response] ${RES1}\n"
-  fi
-  JWT_TOKEN=`echo ${RES1} | /opt/misc/jq --raw-output '.authId'`
-  printf "INFO: JWT token is ${JWT_TOKEN}\n"
-
-}
-
-
-#---------------------------------------------
 # Main
 #---------------------------------------------
 checkRestAuthCallbacks demo changeit
 #authLDAP
-#authDeviceIdSave
 
