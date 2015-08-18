@@ -67,7 +67,7 @@ checkRestAuthCallbacks() {
   printf "=============================================================\n"
 
   # Generate the device fingerprint data (e.g. from a template)
-  ${SED} -e "s/%AUTHID%/${JWT_TOKEN}/g" deviceprint.json.TEMPLATE > deviceprint.json
+  ${SED} -e "s/%AUTHID%/${JWT_TOKEN}/g" templates/deviceprint.json.TEMPLATE > deviceprint.json
 
   # Working with scripted module
   RES3=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data @deviceprint.json "${REST_AUTH_URL}"`
