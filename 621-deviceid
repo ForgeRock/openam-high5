@@ -1,0 +1,191 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+checkRestAuthCallbacks() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+
+  #REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate?realm=/${OPENAM_DEVICEID_REALM}\&noSession=true
+  REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate?realm=/${OPENAM_DEVICEID_REALM}
+
+  # --------------------------------------------------------------------------------
+  #
+  # First connect to the endpoint to get the callback (no username or password)
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 1] Get authentication callbacks and JWT Token ...\n"
+  printf "=============================================================\n"
+  #CURL_CMD1="${CURL} -s --insecure --request POST --header \"Content-Type: application/json\" ${REST_AUTH_URL}"
+  #printf "INFO: [Request] ${CURL_CMD}\n"dd
+  #RES1=`${CURL_CMD1}`
+  RES1=`${CURL} -s --insecure --request POST --header \"Content-Type: application/json\" ${REST_AUTH_URL}`
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    exit 1
+  else
+    printf "INFO: [Response] ${RES1}\n"
+  fi
+  JWT_TOKEN=`echo ${RES1} | /opt/misc/jq --raw-output '.authId'`
+  printf "INFO: JWT token is ${JWT_TOKEN}\n"
+
+  # --------------------------------------------------------------------------------
+  #
+  # Second send in the credentials as required by the callbacks
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 2] Authentication via REST (callbacks) as ${USER} ...\n"
+  printf "=============================================================\n"
+  #Working with module DataStore  
+  RES2=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "DataStore1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "demo" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "changeit" } ] } ] }' ${REST_AUTH_URL}`
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    exit 1
+  else
+    printf "INFO: [Response] ${RES2}\n"
+  fi
+  SSO_TOKEN=`echo ${RES2} | /opt/misc/jq --raw-output '.tokenId'`
+  printf "INFO: SSO token is ${SSO_TOKEN}\n"
+
+  printf "\n"
+
+  # --------------------------------------------------------------------------------
+  #
+  # Third send in the credentials as required by the DeviceID (Match)
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 3] Provide callbacks for the DeviceId (Match) module ...\n"
+  printf "=============================================================\n"
+
+  # Generate the device fingerprint data (e.g. from a template)
+  ${SED} -e "s/%AUTHID%/${JWT_TOKEN}/g" deviceprint.json.TEMPLATE > deviceprint.json
+
+  # Working with scripted module
+  RES3=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data @deviceprint.json "${REST_AUTH_URL}"`
+
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    exit 1
+  else
+    printf "INFO: [Response] ${RES3}\n"
+  fi
+  SSO_TOKEN=`echo ${RES3} | /opt/misc/jq --raw-output '.tokenId'`
+
+  if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
+    printf "INFO: Authentication successful. No need for further modules.\n"
+    printf "INFO: SSO token is ${SSO_TOKEN}\n"
+    exit 0
+  else
+    printf "INFO: DevideId (Match) does not trust device. Will continue with next module.\n"
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # Forth send in the credentials as required by DataStore module (2nd pass)
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 4] Authentication via REST (callbacks) as ${USER} ...\n"
+  printf "=============================================================\n"
+  #Working with module LDAP
+  RES4=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "LDAP1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "demo" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "changeit" } ] } ] }' ${REST_AUTH_URL}`
+
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    exit 1
+  else
+    printf "INFO: [Response] ${RES4}\n"
+  fi
+  SSO_TOKEN=`echo ${RES4} | /opt/misc/jq --raw-output '.tokenId'`
+  if [ ! -z ${SSO_TOKEN} ]; then
+    printf "INFO: Authentication successful. No need for further modules.\n"
+    printf "INFO: SSO token is ${SSO_TOKEN}\n"
+    exit 0
+  else
+    printf "INFO: Authentication failed.\n"
+  fi
+
+}
+
+#---------------------------------------------
+authLDAP() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+
+  REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate?realm=/${OPENAM_DEVICEID_REALM}\&module=LDAP\&noSession=true\&authIndexType=module\&authIndexValue=LDAP
+
+  printf "=============================================================\n"
+  printf "INFO: Getting JWT_Token ...\n"
+  printf "=============================================================\n"
+  RES1=`${CURL} -s --insecure --request POST --header \"Content-Type: application/json\" ${REST_AUTH_URL}`
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    exit 1
+  else
+    printf "INFO: [Response] ${RES1}\n"
+  fi
+  JWT_TOKEN=`echo ${RES1} | /opt/misc/jq --raw-output '.authId'`
+  printf "INFO: JWT token is ${JWT_TOKEN}\n"
+
+  printf "=============================================================\n"
+  printf "INFO: Authentication via REST (callbacks) as ${USER} against realm ${OPENAM_DEVICEID_REALM} and module LDAP...\n"
+  printf "=============================================================\n"
+  #Working with module LDAP
+  RES4=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "LDAP1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "demo" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "changeit" } ] } ] }' ${REST_AUTH_URL}`
+
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    exit 1
+  else
+    printf "INFO: [Response] ${RES4}\n"
+  fi
+  SSO_TOKEN=`echo ${RES4} | /opt/misc/jq --raw-output '.tokenId'`
+  printf "INFO: SSO token is ${SSO_TOKEN}\n"
+}
+
+#---------------------------------------------
+authDeviceIdSave() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+
+  REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate?realm=/${OPENAM_DEVICEID_REALM}\&module=LDAP\&authIndexType=service\&authIndexValue=deviceidsavechain
+
+  printf "=============================================================\n"
+  printf "INFO: Getting JWT_Token ...\n"
+  printf "=============================================================\n"
+  RES1=`${CURL} -s --insecure --request POST --header \"Content-Type: application/json\" ${REST_AUTH_URL}`
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    exit 1
+  else
+    printf "INFO: [Response] ${RES1}\n"
+  fi
+  JWT_TOKEN=`echo ${RES1} | /opt/misc/jq --raw-output '.authId'`
+  printf "INFO: JWT token is ${JWT_TOKEN}\n"
+
+}
+
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+checkRestAuthCallbacks demo changeit
+#authLDAP
+#authDeviceIdSave
+
