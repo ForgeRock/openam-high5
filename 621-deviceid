@@ -52,8 +52,6 @@ checkRestAuthCallbacks() {
   else
     printf "INFO: [Response] ${RES2}\n"
   fi
-  SSO_TOKEN=`echo ${RES2} | /opt/misc/jq --raw-output '.tokenId'`
-  printf "INFO: SSO token is ${SSO_TOKEN}\n"
 
   printf "\n"
 
