@@ -27,6 +27,14 @@ installOpenAM() {
     fi
   fi
 
+  if [ ! -d ${TMP_BASE} ]; then
+    ${MKDIR} ${TMP_BASE}
+    if [ $? != 0 ]; then
+      printf "ERROR: Error creating the temp file directory ${TMP_BASE}. Aborting.\n"
+      exitFailure
+    fi
+  fi
+
   #
   # Extract the MEGA Zip
   #
