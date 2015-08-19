@@ -8,15 +8,16 @@ create-auth-cfg --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_
 set-realm-svc-attrs --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --servicename iPlanetAMAuthService --attributevalues iplanet-am-auth-org-config=%OPENAM_CUSTOM_DEVICEPRINT_CHAIN%
 
 #Create an authentication instance
-#create-auth-instance --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_MODULE% --authtype %TYPE%
-create-auth-instance --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_MODULE% --authtype Scripted 
+create-auth-instance --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_MATCH_MODULE% --authtype Scripted 
+create-auth-instance --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_SAVE_MODULE% --authtype DeviceIdSave
 
 #Add authentication module to chain
-add-auth-cfg-entr --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_CHAIN% --modulename %OPENAM_CUSTOM_DEVICEPRINT_MODULE% --criteria SUFFICIENT --position 1
-
-# For testing purposes, add the DataStore module
-#add-auth-cfg-entr --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_CHAIN% --modulename DataStore --criteria SUFFICIENT --position 1
+add-auth-cfg-entr --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_CHAIN% --modulename DataStore --criteria REQUISITE --position 1
+add-auth-cfg-entr --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_CHAIN% --modulename %OPENAM_CUSTOM_DEVICEPRINT_MATCH_MODULE% --criteria SUFFICIENT --position 2
+#For testing purposes, execute the LDAP module as a second factor (should be OTP)
+add-auth-cfg-entr --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_CHAIN% --modulename LDAP --criteria REQUISITE --position 3
+add-auth-cfg-entr --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_CHAIN% --modulename %OPENAM_CUSTOM_DEVICEPRINT_SAVE_MODULE% --criteria REQUIRED --position 4
 
 #Configure the module and set the server side script
-#The update of the auth module cannot be done in the same batch
+#The update of the auth module cannot be done in the same batch - either 2nd batch or simple ssoadm call
 #update-auth-instance --authtype Scripted --realm %OPENAM_CUSTOM_DEVICEPRINT_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_CHAIN% --authtype Scripted --attributevalues iplanet-am-auth-scripted-client-script-enabled=false iplanet-am-auth-scripted-script-type='JavaScript' iplanet-am-auth-scripted-server-script-file=/opt/git/openam-tinker/templates/openam-deviceprint-serverscript.js

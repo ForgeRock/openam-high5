@@ -10,7 +10,7 @@ configureCustomDevicePrintAuthentication() {
 #----------------------------------------------------------
   printf "INFO: Configuring custom device print realm, authentication module and chain.\n"
 
-  ${SED} -e "s/%OPENAM_CUSTOM_DEVICEPRINT_REALM%/${OPENAM_CUSTOM_DEVICEPRINT_REALM}/g" -e "s/%OPENAM_CUSTOM_DEVICEPRINT_CHAIN%/${OPENAM_CUSTOM_DEVICEPRINT_CHAIN}/g" -e "s/%OPENAM_CUSTOM_DEVICEPRINT_MODULE%/${OPENAM_CUSTOM_DEVICEPRINT_MODULE}/g"  ${INSTALL_SCRIPTS_BASE}/templates/openam-custom-deviceprint-batch.TEMPLATE > ${INSTALL_SCRIPTS_BASE}/openam-custom-deviceprint-batch.ssoadm
+  ${SED} -e "s/%OPENAM_CUSTOM_DEVICEPRINT_REALM%/${OPENAM_CUSTOM_DEVICEPRINT_REALM}/g" -e "s/%OPENAM_CUSTOM_DEVICEPRINT_CHAIN%/${OPENAM_CUSTOM_DEVICEPRINT_CHAIN}/g" -e "s/%OPENAM_CUSTOM_DEVICEPRINT_MATCH_MODULE%/${OPENAM_CUSTOM_DEVICEPRINT_MATCH_MODULE}/g"  -e "s/%OPENAM_CUSTOM_DEVICEPRINT_SAVE_MODULE%/${OPENAM_CUSTOM_DEVICEPRINT_SAVE_MODULE}/g" ${INSTALL_SCRIPTS_BASE}/templates/openam-custom-deviceprint-batch.TEMPLATE > ${INSTALL_SCRIPTS_BASE}/openam-custom-deviceprint-batch.ssoadm
   if [ $? != 0 ]; then
     printf "ERROR: Error using SED (${SED}).\n"
     returnFailure
@@ -28,7 +28,7 @@ configureCustomDevicePrintAuthentication() {
 configureScriptedModule() {
 #----------------------------------------------------------
   printf "INFO: Configuring scripted authentication module.\n"
-  ${OPENAM_SSOADM} update-auth-instance -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --realm ${OPENAM_CUSTOM_DEVICEPRINT_REALM} --name ${OPENAM_CUSTOM_DEVICEPRINT_MODULE} --attributevalues iplanet-am-auth-scripted-client-script-enabled=false iplanet-am-auth-scripted-script-type='JavaScript' iplanet-am-auth-scripted-server-script-file=`pwd`/templates/openam-deviceprint-serverscript.js
+  ${OPENAM_SSOADM} update-auth-instance -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --realm ${OPENAM_CUSTOM_DEVICEPRINT_REALM} --name ${OPENAM_CUSTOM_DEVICEPRINT_MATCH_MODULE} --attributevalues iplanet-am-auth-scripted-client-script-enabled=false iplanet-am-auth-scripted-script-type='JavaScript' iplanet-am-auth-scripted-server-script-file=`pwd`/templates/openam-telephonenumber-deviceprint-serverscript.js
   RC=$?
   if [ ${RC} != 0 ]; then
     printf "ERROR: Error configuring scripted authentication module. ssoadm returned ${RC}.\n"
