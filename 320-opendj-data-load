@@ -21,7 +21,7 @@ loadData() {
   stopOpenDJ
 
   printf "INFO: Importing directory data ...\n"
-  ${OPENDJ_BASE}/bin/import-ldif --ldifFile ${OPENDJ_USERDATA_LDIF} --backendID userRoot --skipFile import-ldif.skipfile  --rejectFile import-ldif.rejectfile
+  ${OPENDJ_BASE}/bin/import-ldif --ldifFile ${OPENDJ_USERDATA_LDIF} --backendID userRoot --skipFile ${TMP_BASE}/ds-import-ldif.skipfile  --rejectFile ${TMP_BASE}/ds-import-ldif.rejectfile
   if [ $? -ne 0 ]; then
     printf "ERROR: Error importing LDIF file ${OPENDJ_USERDATA_LDIF}. Aborting.\n"
     startOpenDJ
