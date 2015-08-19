@@ -10,15 +10,15 @@ configureCustomDevicePrintAuthentication() {
 #----------------------------------------------------------
   printf "INFO: Configuring custom device print realm, authentication module and chain.\n"
 
-  ${SED} -e "s/%OPENAM_CUSTOM_DEVICEPRINT_REALM%/${OPENAM_CUSTOM_DEVICEPRINT_REALM}/g" -e "s/%OPENAM_CUSTOM_DEVICEPRINT_CHAIN%/${OPENAM_CUSTOM_DEVICEPRINT_CHAIN}/g" -e "s/%OPENAM_CUSTOM_DEVICEPRINT_MATCH_MODULE%/${OPENAM_CUSTOM_DEVICEPRINT_MATCH_MODULE}/g"  -e "s/%OPENAM_CUSTOM_DEVICEPRINT_SAVE_MODULE%/${OPENAM_CUSTOM_DEVICEPRINT_SAVE_MODULE}/g" ${INSTALL_SCRIPTS_BASE}/templates/openam-custom-deviceprint-batch.TEMPLATE > ${INSTALL_SCRIPTS_BASE}/openam-custom-deviceprint-batch.ssoadm
+  ${SED} -e "s/%OPENAM_CUSTOM_DEVICEPRINT_REALM%/${OPENAM_CUSTOM_DEVICEPRINT_REALM}/g" -e "s/%OPENAM_CUSTOM_DEVICEPRINT_CHAIN%/${OPENAM_CUSTOM_DEVICEPRINT_CHAIN}/g" -e "s/%OPENAM_CUSTOM_DEVICEPRINT_MATCH_MODULE%/${OPENAM_CUSTOM_DEVICEPRINT_MATCH_MODULE}/g"  -e "s/%OPENAM_CUSTOM_DEVICEPRINT_SAVE_MODULE%/${OPENAM_CUSTOM_DEVICEPRINT_SAVE_MODULE}/g" ${INSTALL_SCRIPTS_BASE}/templates/openam-custom-deviceprint-batch.TEMPLATE > ${TMP_BASE}/openam-custom-deviceprint-batch.ssoadm
   if [ $? != 0 ]; then
     printf "ERROR: Error using SED (${SED}).\n"
     returnFailure
   fi
   
- ${OPENAM_SSOADM} do-batch --debug -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --batchfile ${INSTALL_SCRIPTS_BASE}/openam-custom-deviceprint-batch.ssoadm --continue --batchstatus ${INSTALL_SCRIPTS_BASE}/openam-custom-deviceprint-batch.STATUS
+ ${OPENAM_SSOADM} do-batch --debug -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --batchfile ${TMP_BASE}/openam-custom-deviceprint-batch.ssoadm --continue --batchstatus ${TMP_BASE}/openam-custom-deviceprint-batch.ssoadm.STATUS
   if [ $? != 0 ]; then
-    printf "ERROR: Error configuring custom device print realm, authentication module and chain. See ${INSTALL_SCRIPTS_BASE}/openam-custom-deviceprint-batch.STATUS for ssoadm return codes.\n"
+    printf "ERROR: Error configuring custom device print realm, authentication module and chain. See ${TMP_BASE}/openam-custom-deviceprint-batch.ssoadm.STATUS for ssoadm return codes.\n"
   else
     printf "INFO: Successfully configured custom device print realm, authentication module and chain.\n"
   fi
