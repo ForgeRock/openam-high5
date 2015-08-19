@@ -17,7 +17,7 @@ configurePCookieAuthentication() {
   
  ${OPENAM_SSOADM} do-batch -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --batchfile ${TMP_BASE}/openam-pcookie-batch.ssoadm --continue --batchstatus ${TMP_BASE}/openam-pcookie-batch.ssoadm.STATUS
   if [ $? != 0 ]; then
-    printf "ERROR: Error setting up the persistent cookie authentication module and post authentication class. See ${INSTALL_SCRIPTS_BASE}/openam-pcookie-batch.STATUS for ssoadm return codes.\n"
+    printf "ERROR: Error setting up the persistent cookie authentication module and post authentication class. See ${TMP_BASE}/openam-pcookie-batch.ssoadm.STATUS for ssoadm return codes.\n"
   else
     printf "INFO: Successfully configured the persistent cookie authentication module and post authentication class.\n"
   fi
@@ -35,7 +35,7 @@ removePCookieAuthentication() {
   
  ${OPENAM_SSOADM} do-batch -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --batchfile ${TMP_BASE}/openam-pcookie-batch-remove.ssoadm --continue --batchstatus ${TMP_BASE}/openam-pcookie-batch-remove.ssoadm.STATUS
   if [ $? != 0 ]; then
-    printf "ERROR: Error removing the persistent cookie authentication module and post authentication class. See ${INSTALL_SCRIPTS_BASE}/openam-pcookie-batch-remove.STATUS for ssoadm return codes.\n"
+    printf "ERROR: Error removing the persistent cookie authentication module and post authentication class. See ${TMP_BASE}/openam-pcookie-batch-remove.ssoadm.STATUS for ssoadm return codes.\n"
   else
     printf "INFO: Successfully removed the persistent cookie authentication module and post authentication class.\n"
   fi
