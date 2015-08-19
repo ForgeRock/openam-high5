@@ -1,0 +1,59 @@
+#!/bin/bash -x
+
+. ./platform.properties
+. ./functions
+
+#---------------------------------------------
+oauth2PasswordGrant() {
+#---------------------------------------------
+
+  OAUTH2_BASE_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/oauth2
+ 
+  URL1="${OAUTH2_BASE_URL}/access_token?realm=${OPENAM_BASE_REALM}&grant_type=password&scope=profile&username=demo&password=changeit"
+
+  printf "INFO: OAuth2 password grant ...\n"
+  #${CURL} -s --insecure --request POST --header "X-OpenAM-Username: ${USER}" --header "X-OpenAM-Password: ${PASSWORD}" --header "Content-Type: application/json" --data "{}" ${REST_AUTH_URL}
+  #${CURL} -s --insecure --request POST --user ${OAUTH2_CLIENT_ID}:${OAUTH2_CLIENT_PASSSWORD} --header "Content-Type: application/json" --data "{}" ${URL}
+  RES1=`${CURL} -s --insecure --request POST --user ${OAUTH2_CLIENT_ID}:${OAUTH2_CLIENT_PASSWORD} --header "Content-Type: application/json" "${URL1}"`
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: Curl returned error ${RC}."
+    exit 1
+  fi
+  echo ${RES1}
+  #{"access_token":"96580f64-a89e-4ec4-b034-6356120d537b","refresh_token":"5e1de6e5-8cb3-4226-bfb4-f2e799fed071","scope":"profile","token_type":"Bearer","expires_in":59}
+  ACCESS_TOKEN=`echo ${RES1} | /opt/misc/jq --raw-output '.access_token'`
+  REFRESH_TOKEN=`echo ${RES1} | /opt/misc/jq --raw-output '.refresh_token'`
+
+  URL2="${OAUTH2_BASE_URL}/access_token?realm=${OPENAM_BASE_REALM}&grant_type=refresh_token&scope=profile&refresh_token=${REFRESH_TOKEN}"
+  RES2=`${CURL} -s --insecure --request POST --user ${OAUTH2_CLIENT_ID}:${OAUTH2_CLIENT_PASSWORD} --header "Content-Type: application/json" "${URL2}"`
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: Curl returned error ${RC}."
+    exit 1
+  fi
+  echo ${RES2}
+
+
+  #{{openamUrl}}/oauth2/access_token?client_id={{clientId}}&grant_type=password&scope=one%20two%20three&username=demo&password=changeit&client_secret={{clientSecret}}
+  URL3="${OAUTH2_BASE_URL}/introspect?realm=${OPENAM_BASE_REALM}&token=${ACCESS_TOKEN}"
+  RES3=`${CURL} -s --insecure --request POST --user ${OAUTH2_CLIENT_ID}:${OAUTH2_CLIENT_PASSWORD} --header "Content-Type: application/json" "${URL3}"`
+  #RES3=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" "${URL3}"`
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: Curl returned error ${RC}."
+    exit 1
+  fi
+  echo ${RES3}
+
+
+  #${CURL} --insecure --request POST --user ${OAUTH2_CLIENT_ID}:${OAUTH2_CLIENT_PASSWORD} ${URL}
+  #${CURL} --insecure --request POST ${TARGET_URL}
+
+  #TOKENID=`${CURL} -s --insecure --request POST --header "X-OpenAM-Username: ${USER}" --header "X-OpenAM-Password: ${PASSWORD}" --header "Content-Type: application/json" --data "{}" ${REST_AUTH_URL} | /opt/misc/jq --raw-output '.tokenId'`
+  #printf "\n"
+  #printf "tokenId=${TOKENID}\n"
+  #printf "\n"
+}
+
+oauth2PasswordGrant

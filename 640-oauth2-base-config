@@ -1,0 +1,96 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+#. ./functions-tomcat
+. ./functions-openam
+
+#----------------------------------------------------------
+createOAuth2Client() {
+#----------------------------------------------------------
+  printf "INFO: Creating OAuth2 client.\n"
+  ${OPENAM_SSOADM} create-agent  -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --agentname ${OAUTH2_CLIENT_ID} --agenttype OAuth2Client --realm ${OPENAM_BASE_REALM} --attributevalues userpassword=${OAUTH2_CLIENT_PASSWORD} com.forgerock.openam.oauth2provider.scopes="[0]=openid|en|OpenID" com.forgerock.openam.oauth2provider.scopes="[1]=profile|en|Your Profile" com.forgerock.openam.oauth2provider.scopes="[2]=email|en|Your Email" com.forgerock.openam.oauth2provider.defaultScopes="[0]=openid|en|OpenID"
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    returnFailure
+  fi
+}
+
+#----------------------------------------------------------
+removeOAuth2Client() {
+#----------------------------------------------------------
+  printf "INFO: Remove OAuth2 client.\n"
+  ${OPENAM_SSOADM} delete-agents  -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --agentnames ${OAUTH2_CLIENT_ID} --realm ${OPENAM_BASE_REALM}
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    returnFailure
+  fi
+}
+
+#----------------------------------------------------------
+addOAuth2Provider() {
+#----------------------------------------------------------
+  printf "INFO: Enabling OAuth2 provider service.\n"
+  ${OPENAM_SSOADM} add-svc-realm -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --realm ${OPENAM_BASE_REALM} --servicename OAuth2Provider 
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    returnFailure
+  fi
+}
+
+#----------------------------------------------------------
+removeOAuth2Provider() {
+#----------------------------------------------------------
+  printf "INFO: Removing OAuth2 provider service.\n"
+  ${OPENAM_SSOADM} remove-svc-realm -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --realm ${OPENAM_BASE_REALM} --servicename OAuth2Provider 
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    returnFailure
+  fi
+}
+
+#----------------------------------------------------------
+printRealmAuthAttributes() {
+#----------------------------------------------------------
+  printf "INFO: Listing realm authentication service attributes for realm ${OPENAM_BASE_REALM}.\n"
+  ${OPENAM_SSOADM} get-realm-svc-attrs -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --realm ${OPENAM_BASE_REALM} --servicename iPlanetAMAuthService 
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: ssoadm returned ${RC}.\n"
+    returnFailure
+  fi
+}
+
+
+#-> Add OAuth2 service to realm ssorealm with ssoadm
+#-> OAuth2 consent page ???
+#-> Github project for the client side; how does the save consent and where ?
+#--- How to map scopes inside OpenAM / to user attributes ?
+#--- How to enabled / disable consent ?
+#--- Where is the consent stored ?
+
+
+
+
+
+
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+printScriptStart
+if [ $# == 1 ] && [ $1 == "remove" ]; then
+  printf "INFO: Mode is REMOVE.\n"
+  removeOAuth2Client
+  removeOAuth2Provider
+else
+  createOAuth2Client
+  addOAuth2Provider
+fi
+#stopTomcat
+#startTomcat
+printScriptEnd
