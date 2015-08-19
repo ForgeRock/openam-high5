@@ -8,7 +8,6 @@ create-auth-cfg --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_DEVICEID_CHAIN%
 set-realm-svc-attrs --realm %OPENAM_DEVICEID_REALM% --servicename iPlanetAMAuthService --attributevalues iplanet-am-auth-org-config=%OPENAM_DEVICEID_CHAIN%
 
 #Create an authentication instance
-#create-auth-instance --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_CUSTOM_DEVICEPRINT_MODULE% --authtype %TYPE%
 create-auth-instance --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_DEVICEID_MATCH_MODULE% --authtype DeviceIdMatch
 create-auth-instance --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_DEVICEID_SAVE_MODULE% --authtype DeviceIdSave
 
