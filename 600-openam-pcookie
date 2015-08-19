@@ -9,15 +9,15 @@
 configurePCookieAuthentication() {
 #----------------------------------------------------------
   printf "INFO: Configuring persistent cookie authentication module and post authentication class.\n"
-  ${SED} -e "s/%OPENAM_BASE_REALM%/${OPENAM_BASE_REALM}/g" -e "s/%PCOOKIE_AUTH_CHAIN%/${PCOOKIE_AUTH_CHAIN}/g" -e "s/%PCOOKIE_AUTH_MODULE%/${PCOOKIE_AUTH_MODULE}/g"  -e "s/%OPENAM_PCOOKIE_CLASS%/${OPENAM_PCOOKIE_CLASS}/g" ${INSTALL_SCRIPTS_BASE}/templates/openam-pcookie-batch.TEMPLATE > ${INSTALL_SCRIPTS_BASE}/openam-pcookie-batch.ssoadm
+  ${SED} -e "s/%OPENAM_BASE_REALM%/${OPENAM_BASE_REALM}/g" -e "s/%PCOOKIE_AUTH_CHAIN%/${PCOOKIE_AUTH_CHAIN}/g" -e "s/%PCOOKIE_AUTH_MODULE%/${PCOOKIE_AUTH_MODULE}/g"  -e "s/%OPENAM_PCOOKIE_CLASS%/${OPENAM_PCOOKIE_CLASS}/g" ${INSTALL_SCRIPTS_BASE}/templates/openam-pcookie-batch.ssoadm.TEMPLATE > ${TMP_BASE}/openam-pcookie-batch.ssoadm
   if [ $? != 0 ]; then
     printf "ERROR: Error using SED (${SED}).\n"
     returnFailure
   fi
   
- ${OPENAM_SSOADM} do-batch -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --batchfile ${INSTALL_SCRIPTS_BASE}/openam-pcookie-batch.ssoadm --continue --batchstatus ${INSTALL_SCRIPTS_BASE}/openam-pcookie-batch.STATUS
+ ${OPENAM_SSOADM} do-batch -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --batchfile ${TMP_BASE}/openam-pcookie-batch.ssoadm --continue --batchstatus ${TMP_BASE}/openam-pcookie-batch.ssoadm.STATUS
   if [ $? != 0 ]; then
-    printf "ERROR: Error setting up the persistent cookie authentication module and post authentication class. See ${INSTALL_SCRIPTS_BASE}/openam-pcookie-batch.STATUS for ssoadm return codes.\n"
+    printf "ERROR: Error setting up the persistent cookie authentication module and post authentication class. See ${TMP_BASE}/openam-pcookie-batch.ssoadm.STATUS for ssoadm return codes.\n"
   else
     printf "INFO: Successfully configured the persistent cookie authentication module and post authentication class.\n"
   fi
@@ -27,15 +27,15 @@ configurePCookieAuthentication() {
 removePCookieAuthentication() {
 #----------------------------------------------------------
   printf "INFO: Removing persistent cookie authentication module and post authentication class.\n"
-  ${SED} -e "s/%OPENAM_BASE_REALM%/${OPENAM_BASE_REALM}/g" -e "s/%PCOOKIE_AUTH_CHAIN%/${PCOOKIE_AUTH_CHAIN}/g" -e "s/%PCOOKIE_AUTH_MODULE%/${PCOOKIE_AUTH_MODULE}/g" -e "s/%OPENAM_PCOOKIE_CLASS%/${OPENAM_PCOOKIE_CLASS}/g" ${INSTALL_SCRIPTS_BASE}/templates/openam-pcookie-batch-remove.TEMPLATE > ${INSTALL_SCRIPTS_BASE}/openam-pcookie-batch-remove.ssoadm
+  ${SED} -e "s/%OPENAM_BASE_REALM%/${OPENAM_BASE_REALM}/g" -e "s/%PCOOKIE_AUTH_CHAIN%/${PCOOKIE_AUTH_CHAIN}/g" -e "s/%PCOOKIE_AUTH_MODULE%/${PCOOKIE_AUTH_MODULE}/g" -e "s/%OPENAM_PCOOKIE_CLASS%/${OPENAM_PCOOKIE_CLASS}/g" ${INSTALL_SCRIPTS_BASE}/templates/openam-pcookie-batch-remove.ssoadm.TEMPLATE > ${TMP_BASE}/openam-pcookie-batch-remove.ssoadm
   if [ $? != 0 ]; then
     printf "ERROR: Error using SED (${SED}).\n"
     returnFailure
   fi
   
- ${OPENAM_SSOADM} do-batch -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --batchfile ${INSTALL_SCRIPTS_BASE}/openam-pcookie-batch-remove.ssoadm --continue --batchstatus ${INSTALL_SCRIPTS_BASE}/openam-pcookie-batch-remove.STATUS
+ ${OPENAM_SSOADM} do-batch -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --batchfile ${TMP_BASE}/openam-pcookie-batch-remove.ssoadm --continue --batchstatus ${TMP_BASE}/openam-pcookie-batch-remove.ssoadm.STATUS
   if [ $? != 0 ]; then
-    printf "ERROR: Error removing the persistent cookie authentication module and post authentication class. See ${INSTALL_SCRIPTS_BASE}/openam-pcookie-batch-remove.STATUS for ssoadm return codes.\n"
+    printf "ERROR: Error removing the persistent cookie authentication module and post authentication class. See ${TMP_BASE}/openam-pcookie-batch-remove.ssoadm.STATUS for ssoadm return codes.\n"
   else
     printf "INFO: Successfully removed the persistent cookie authentication module and post authentication class.\n"
   fi

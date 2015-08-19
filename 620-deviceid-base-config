@@ -1,0 +1,67 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-tomcat
+. ./functions-openam
+
+#----------------------------------------------------------
+configureDeviceIDAuthentication() {
+#----------------------------------------------------------
+  printf "INFO: Configuring deviceid realm, authentication module and chain.\n"
+
+  ${SED} -e "s/%OPENAM_DEVICEID_REALM%/${OPENAM_DEVICEID_REALM}/g" -e "s/%OPENAM_DEVICEID_CHAIN%/${OPENAM_DEVICEID_CHAIN}/g" -e "s/%OPENAM_DEVICEID_MATCH_MODULE%/${OPENAM_DEVICEID_MATCH_MODULE}/g" -e "s/%OPENAM_DEVICEID_SAVE_MODULE%/${OPENAM_DEVICEID_SAVE_MODULE}/g"  ${INSTALL_SCRIPTS_BASE}/templates/openam-deviceid-batch.ssoadm.TEMPLATE > ${TMP_BASE}/openam-deviceid-batch.ssoadm
+  if [ $? != 0 ]; then
+    printf "ERROR: Error using SED (${SED}).\n"
+    returnFailure
+  fi
+  
+ ${OPENAM_SSOADM} do-batch --debug -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --batchfile ${TMP_BASE}/openam-deviceid-batch.ssoadm --continue --batchstatus ${TMP_BASE}/openam-deviceid-batch.ssoadm.STATUS
+  if [ $? != 0 ]; then
+    printf "ERROR: Error configuring deviceid realm, authentication module and chain. See ${TMP_BASE}/openam-deviceid-batch.ssoadm.STATUS for ssoadm return codes.\n"
+  else
+    printf "INFO: Successfully configured deviceid realm, authentication module and chain.\n"
+  fi
+}
+
+#----------------------------------------------------------
+configureScriptedModule() {
+#----------------------------------------------------------
+  printf "INFO: Configuring scripted authentication module.\n"
+  ${OPENAM_SSOADM} update-auth-instance -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --realm ${OPENAM_DEVICEID_REALM} --name ${OPENAM_DEVICEID_MODULE} --attributevalues iplanet-am-auth-scripted-client-script-enabled=false iplanet-am-auth-scripted-script-type='JavaScript' iplanet-am-auth-scripted-server-script-file=${INSTALL_SCRIPTS_BASE}/templates/openam-deviceprint-serverscript.js
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: Error configuring scripted authentication module. ssoadm returned ${RC}.\n"
+  else
+    printf "INFO: Successfully configured scripted authentication module.\n"
+  fi
+}
+
+#----------------------------------------------------------
+removeRealm() {
+#----------------------------------------------------------
+  # Remove the realm
+  printf "INFO: Removing realm ${OPENAM_DEVICEID_REALM}.\n"
+  ${OPENAM_SSOADM} delete-realm -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --realm ${OPENAM_DEVICEID_REALM}
+  if [ $? != 0 ]; then
+    printf "ERROR: Error removing realm ${OPENAM_DEVICEID_REALM}.\n"
+  else
+    printf "INFO: Successfully removed realm ${OPENAM_DEVICEID_REALM}.\n"
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+printScriptStart
+if [ $# == 1 ] && [ $1 == "remove" ]; then
+  printf "INFO: Mode is REMOVE.\n"
+  removeRealm
+else
+  configureDeviceIDAuthentication
+  #configureScriptedModule
+fi
+stopTomcat
+startTomcat
+printScriptEnd
+

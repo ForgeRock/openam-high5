@@ -1,0 +1,19 @@
+#Create a realm
+create-realm --realm %OPENAM_DEVICEID_REALM%
+
+#Create an authentication chain
+create-auth-cfg --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_DEVICEID_CHAIN%
+
+#Set auth chain as default for realm
+set-realm-svc-attrs --realm %OPENAM_DEVICEID_REALM% --servicename iPlanetAMAuthService --attributevalues iplanet-am-auth-org-config=%OPENAM_DEVICEID_CHAIN%
+
+#Create an authentication instance
+create-auth-instance --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_DEVICEID_MATCH_MODULE% --authtype DeviceIdMatch
+create-auth-instance --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_DEVICEID_SAVE_MODULE% --authtype DeviceIdSave
+
+#Add authentication module to chain
+add-auth-cfg-entr --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_DEVICEID_CHAIN% --modulename DataStore --criteria REQUISITE --position 1
+add-auth-cfg-entr --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_DEVICEID_CHAIN% --modulename %OPENAM_DEVICEID_MATCH_MODULE% --criteria SUFFICIENT --position 2
+#For testing purposes, execute the LDAP module as a second factor (should be OTP)
+add-auth-cfg-entr --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_DEVICEID_CHAIN% --modulename LDAP --criteria REQUISITE --position 3
+add-auth-cfg-entr --realm %OPENAM_DEVICEID_REALM% --name %OPENAM_DEVICEID_CHAIN% --modulename %OPENAM_DEVICEID_SAVE_MODULE% --criteria REQUIRED --position 4

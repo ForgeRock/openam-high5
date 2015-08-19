@@ -1,0 +1,20 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-opendj
+
+LDAPSEARCH=${OPENDJ_BASE}/bin/ldapsearch
+LDAPMODIFY=${OPENDJ_BASE}/bin/ldapmodify
+DSCONFIG=${OPENDJ_BASE}/bin/dsconfig
+
+#---------------------------------------------
+searchEmbeddedUsersDeviceID() {
+#---------------------------------------------
+  SEARCH_ROOT=ou=people,${OPENAM_DS_SUFFIX}
+
+  ${LDAPSEARCH} -h localhost -p ${OPENAM_DS_PORT} -D ${OPENAM_DS_ADMIN} -w ${OPENAM_DS_ADMIN_PASSWORD} -b ${SEARCH_ROOT} -s sub -T "uid=*"
+}
+
+searchEmbeddedUsersDeviceID
+

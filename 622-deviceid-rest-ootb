@@ -1,0 +1,16 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+# Load the deviceid REST base scripts
+#---------------------------------------------
+. ./621-deviceid-rest-base
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+authDeviceIdChainRestCallbacks ${OPENAM_DEVICEID_REALM} demo changeit templates/callback-deviceprint.json.TEMPLATE
+

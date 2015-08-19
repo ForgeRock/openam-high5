@@ -1,0 +1,53 @@
+{
+  "authId":"%AUTHID%",
+  "template":"",
+  "stage":"DeviceIdMatch2",
+  "callbacks":[
+    {
+      "type":"HiddenValueCallback",
+      "input":[
+        {
+          "name":"IDToken1",
+          "value":
+            "{\"screen\":{
+              \"screenWidth\":1440,
+              \"screenHeight\":900,
+              \"screenColourDepth\":24
+            },
+            \"timezone\":{
+              \"timezone\":-120
+            },
+            \"plugins\":{
+              \"installedPlugins\":\"widevinecdmadapter.plugin\"
+            },
+            \"fonts\":{
+              \"installedFonts\":\"cursive\"
+            },
+            \"userAgent\":\"Mozilla/5.0 (MacintoshAppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.130 Safari/537.36\",
+            \"appName\":\"Netscape\",
+            \"appCodeName\":\"Mozilla\",
+            \"appVersion\":\"5.0 (Macintosh Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.130 Safari/537.36\",
+            \"platform\":\"MacIntel\",
+            \"product\":\"Gecko\",
+            \"productSub\":\"20030107\",
+            \"vendor\":\"Google Inc.\",
+            \"language\":\"en-US\",
+            \"mybogusdata\":\"bogussuperdude\",
+            \"geolocation\":{
+		\"longitude\":5.8086832,
+		\"latitude\":45.2147321
+	    }}" 
+          }
+      ]
+    },
+    {
+      "type":"TextOutputCallback",
+      "output":[
+        {
+          "name":"messageType",
+          "value":"4"
+        }
+      ]
+    }
+  ]
+}

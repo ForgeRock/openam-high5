@@ -1,0 +1,23 @@
+{
+  "authId":"%AUTHID%",
+  "template":"",
+  "stage":"DeviceIdMatch2",
+  "callbacks":[
+    {
+      "type":"HiddenValueCallback",
+      "input":[
+        {
+          "name":"IDToken1",
+          "value": "{\"telephoneNumber\":\"%TELEPHONENUMBER%\"}"
+        }
+      ]
+    },
+    {
+      "type":"TextOutputCallback",
+      "input":[
+        {
+        }
+      ]
+    }
+  ]
+}

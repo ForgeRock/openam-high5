@@ -1,0 +1,260 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#
+# Function to invoke an authentication chain via REST composed of the following modules
+#   1.) DataStore
+#   2.) DeviceId (Match)
+#   3.) LDAP (for testing purposes as a 2nd factor, should be OTP)
+#   4.) DeviceId (Save)
+#
+# Note that this function is referenced by other scripts.
+#
+
+#---------------------------------------------
+usage() {
+#---------------------------------------------
+  printf "Usage: $0 REALM USERNAME PASSWORD DEVICEPRINT_CALLBACK_TEMPLATE_FILE [TELEPHONENUMBER]\n\n"
+  printf "Examples:\n"
+  printf "  $0 deviceidrealm demo changeit templates/callback-deviceprint.json.TEMPLATE\n"
+  printf "  $0 mobilerealm demo changeit templates/callback-telephonenumber-deviceprint.json.TEMPLATE +33123456789\n"
+  printf "\n"
+}
+
+#---------------------------------------------
+authDeviceIdChainRestCallbacks() {
+#---------------------------------------------
+  REALM=$1
+  USER=$2
+  PASSWORD=$3
+  DEVICEPRINT_CALLBACK_FILE=$4
+  TELEPHONENUMBER=$5
+
+  REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate?realm=/${REALM}
+  #REST_AUTH_URL=https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate?realm=/${REALM}\&noSession=true
+
+  # --------------------------------------------------------------------------------
+  #
+  # Check input parameters
+  #
+  # --------------------------------------------------------------------------------
+  if [ $# -le 3 ]; then
+    printf "ERROR: Wrong or insufficient arguments.\n"
+    usage
+    return 1
+  fi
+
+  if [ ! -f ${DEVICEPRINT_CALLBACK_FILE} ]; then
+    printf "ERROR: Deviceprint callback template file does not exists at ${DEVICEPRINT_CALLBACK_FILE}. Aborting.\n"
+    usage
+    return 1
+  fi
+
+  #
+  # If telephonenumber not present, set it to the default one
+  # Note that telephonenumber is used in a specific device fingerprint
+  #
+  if [ -z ${TELEPHONENUMBER} ] || [ ${TELEPHONENUMBER} == "null" ]; then
+    TELEPHONENUMBER=${OPENAM_CUSTOM_DEVICEPRINT_SAMPLE_TELEPHONENUMBER}
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # First connect to the endpoint to get the callback (no username or password)
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 1] Get authentication callbacks and JWT Token ...\n"
+  printf "=============================================================\n"
+  printf "INFO: [Request-URL] ${REST_AUTH_URL}\n"
+  printf "INFO: [Request-JSON] <empty>\n"
+  RES1=`${CURL} -s --insecure --request POST --header \"Content-Type: application/json\" ${REST_AUTH_URL}`
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES1}\n"
+  fi
+  JWT_TOKEN=`echo ${RES1} | /opt/misc/jq --raw-output '.authId'`
+  if [ ! -z ${JWT_TOKEN} ] && [ ${JWT_TOKEN} != "null" ]; then
+    printf "INFO: JWT token is ${JWT_TOKEN}\n"
+  else
+    printf "ERROR: JWT token is null. Authentication could not start.\n"
+    return 1
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # Second send in the credentials as required by the callbacks
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 2] Authentication via REST (callbacks) as ${USER} ...\n"
+  printf "=============================================================\n"
+  #Using module DataStore
+  #Build the json payload and write to a file
+  echo '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "DataStore1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "'${USER}'" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "'${PASSWORD}'" } ] } ] }' > ${TMP_BASE}/callback-deviceid-step2.json
+  printf "INFO: [Request-URL] ${REST_AUTH_URL}\n"
+  printf "INFO: [Request-JSON] `cat ${TMP_BASE}/callback-deviceid-step2.json`\n"
+
+  RES2=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data @${TMP_BASE}/callback-deviceid-step2.json ${REST_AUTH_URL}`
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES2}\n"
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # Third send in the credentials as required by the DeviceID (Match)
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 3] Provide callbacks for the DeviceId (Match) module ...\n"
+  printf "=============================================================\n"
+  #Using module DeviceId (Match)
+  #Build the json payload and write to a file
+  ${SED} -e "s/%AUTHID%/${JWT_TOKEN}/g" -e "s/%TELEPHONENUMBER%/${TELEPHONENUMBER}/g" ${DEVICEPRINT_CALLBACK_FILE} > ${TMP_BASE}/callback-deviceid-step3.json
+  printf "INFO: [Request-URL] ${REST_AUTH_URL}\n"
+  printf "INFO: [Request-JSON] `cat ${TMP_BASE}/callback-deviceid-step3.json`\n"
+
+  RES3=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data @${TMP_BASE}/callback-deviceid-step3.json "${REST_AUTH_URL}"`
+
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES3}\n"
+  fi
+  SSO_TOKEN=`echo ${RES3} | /opt/misc/jq --raw-output '.tokenId'`
+
+  if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
+    printf "INFO: Authentication successful. No need for further modules.\n"
+    printf "INFO: SSO token is ${SSO_TOKEN}\n"
+    return 0
+  else
+    printf "INFO: DevideId (Match) does not trust device. Will continue with next module.\n"
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # Forth send in the credentials as required by LDAP module (2nd factor)
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 4] Provide callbacks for the LDAP module ...\n"
+  printf "=============================================================\n"
+  #Working with module LDAP
+  #Build the json payload and write to a file
+  
+  echo '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "LDAP1", "callbacks": [ { "type": "NameCallback", "output": [ { "name": "prompt", "value": " User Name: " } ], "input": [ { "name": "IDToken1", "value": "'${USER}'" } ] }, { "type": "PasswordCallback", "output": [ { "name": "prompt", "value": " Password: " } ], "input": [ { "name": "IDToken2", "value": "'${PASSWORD}'" } ] } ] }' > ${TMP_BASE}/callback-deviceid-step4.json
+  printf "INFO: [Request-URL] ${REST_AUTH_URL}\n"
+  printf "INFO: [Request-JSON] `cat ${TMP_BASE}/callback-deviceid-step4.json`\n"
+
+  RES4=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data @${TMP_BASE}/callback-deviceid-step4.json ${REST_AUTH_URL}`
+
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES4}\n"
+  fi
+  SSO_TOKEN=`echo ${RES4} | /opt/misc/jq --raw-output '.tokenId'`
+  if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
+    printf "INFO: Authentication successful. No need for further modules.\n"
+    printf "INFO: SSO token is ${SSO_TOKEN}\n"
+    return 0
+  else
+    CALLBACKS=`echo ${RES4} | /opt/misc/jq --raw-output '.callbacks'`
+    if [ ! -z "${CALLBACKS}" ] && [ "${CALLBACKS}" != "null" ]; then
+      printf "INFO: Callbacks returned. Assuming this is to get consent to store the device permanently.\n"
+    else
+      printf "INFO: Authentication failed.\n"
+      return 1
+    fi		
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # Fifth send the consent to store the trusted device information 
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 5] Provide callbacks for DeviceId (Save): Consent to store the trusted device information ...\n"
+  printf "=============================================================\n"
+  #Working with module DeviceId (Save)
+  echo '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "DeviceSave2", "callbacks": [ { "type": "ChoiceCallback", "input": [ { "name": "IDToken1", "value": "0" } ] } ] }' > ${TMP_BASE}/callback-deviceid-step5.json
+  printf "INFO: [Request-URL] ${REST_AUTH_URL}\n"
+  printf "INFO: [Request-JSON] `cat ${TMP_BASE}/callback-deviceid-step5.json`\n"
+  RES5=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data @${TMP_BASE}/callback-deviceid-step5.json ${REST_AUTH_URL}`
+
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES5}\n"
+  fi
+  SSO_TOKEN=`echo ${RES5} | /opt/misc/jq --raw-output '.tokenId'`
+  if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
+    printf "INFO: Authentication successful. No need for further modules.\n"
+    printf "INFO: SSO token is ${SSO_TOKEN}\n"
+    return 0
+  else
+    CALLBACKS=`echo ${RES5} | /opt/misc/jq --raw-output '.callbacks'`
+    if [ ! -z "${CALLBACKS}" ] && [ "${CALLBACKS}" != "null" ]; then
+      printf "INFO: Callbacks returned. Assuming this is to get the name under which the device should be stored.\n"
+    else
+      printf "INFO: Authentication failed.\n"
+      return 1
+    fi
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # Sixth send the name under which the device profile shall be stored
+  #
+  # --------------------------------------------------------------------------------
+  printf "=============================================================\n"
+  printf "INFO: [Step 6] Provide the name under which the device profile shall be stored  ...\n"
+  printf "=============================================================\n"
+  #Working with module DeviceId (Save)
+  #If the device name is empty (value=""), il will be generated
+  echo '{ "authId": "'${JWT_TOKEN}'", "template": "", "stage": "DeviceIdSave3", "callbacks": [ { "type": "NameCallback", "input": [ { "name": "IDToken1", "value": "" } ] } ] }' > ${TMP_BASE}/callback-deviceid-step6.json
+  printf "INFO: [Request-URL] ${REST_AUTH_URL}\n"
+  printf "INFO: [Request-JSON] `cat ${TMP_BASE}/callback-deviceid-step6.json`\n"
+  RES6=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data @${TMP_BASE}/callback-deviceid-step6.json ${REST_AUTH_URL}`
+
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES5}\n"
+  fi
+  SSO_TOKEN=`echo ${RES6} | /opt/misc/jq --raw-output '.tokenId'`
+  if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
+    printf "INFO: Authentication successful.\n"
+    printf "INFO: SSO token is ${SSO_TOKEN}\n"
+    return 0
+  else
+    printf "INFO: Authentication failed.\n"
+    return 1
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+#Testing error cases
+#authDeviceIdChainRestCallbacks ${OPENAM_DEVICEID_REALM} demo changeit
+#authDeviceIdChainRestCallbacks ${OPENAM_DEVICEID_REALM} demo changeit notexistingtemplates/callback-deviceprint.json.TEMPLATE
+
