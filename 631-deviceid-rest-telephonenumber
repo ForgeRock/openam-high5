@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+# Load the deviceid REST base scripts
+#---------------------------------------------
+. ./621-deviceid-rest-base
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+if [ $# -ge 1 ]; then
+  TELEPHONENUMBER=$1
+else
+  TELEPHONENUMBER=${OPENAM_CUSTOM_DEVICEPRINT_SAMPLE_TELEPHONENUMBER}
+fi
+printf "INFO: [$0] Executing custom device fingerprint chain via REST with telephonenumber ${TELEPHONENUMBER}.\n"
+authDeviceIdChainRestCallbacks ${OPENAM_CUSTOM_DEVICEPRINT_REALM} demo changeit templates/callback-telephonenumber-deviceprint.json.TEMPLATE ${TELEPHONENUMBER}
+
+

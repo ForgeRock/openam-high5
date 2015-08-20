@@ -14,10 +14,8 @@
     },
     {
       "type":"TextOutputCallback",
-      "output":[
+      "input":[
         {
-          "name":"messageType",
-          "value":"4"
         }
       ]
     }
