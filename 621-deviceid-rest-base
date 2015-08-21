@@ -140,7 +140,7 @@ authDeviceIdChainRestCallbacks() {
     printf "INFO: SSO token is ${SSO_TOKEN}\n"
     return 0
   else
-    printf "INFO: DevideId (Match) does not trust device. Will continue with next module.\n"
+    printf "INFO: DeviceId (Match) does not trust device. Will continue with next module.\n"
   fi
 
   # --------------------------------------------------------------------------------
@@ -238,7 +238,7 @@ authDeviceIdChainRestCallbacks() {
     printf "ERROR: curl returned ${RC}.\n"
     return 1
   else
-    printf "INFO: [Response] ${RES5}\n"
+    printf "INFO: [Response] ${RES6}\n"
   fi
   SSO_TOKEN=`echo ${RES6} | /opt/misc/jq --raw-output '.tokenId'`
   if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
