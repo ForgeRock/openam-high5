@@ -4,6 +4,7 @@ A selection of script to deploy OpenAM and setup specific use cases. In particul
 
 The uses cases comprise :
 - Browser Fingerprint (http://identityrocks.blogspot.fr/2015/08/smarter-security-with-device.html)
+- Complex Authentication Chain via REST (http://identityrocks.blogspot.fr/2015/09/rest-on-every-side.html)
 
 * * *
 Unless specified otherwise, Source Code Form within the entire project
