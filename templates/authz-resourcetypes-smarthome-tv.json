@@ -6,6 +6,7 @@
   "actions": {
     "ENABLE": true,
     "DISABLE": true,
-    "SHARE_SCREEN": true
+    "BROADCAST SCREEN": true,
+    "BROADCAST CAMERA": true
   }
 }
