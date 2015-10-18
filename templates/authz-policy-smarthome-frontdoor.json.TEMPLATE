@@ -1,0 +1,12 @@
+{
+    "name" : "FrontDoor",
+    "active" : true,
+    "description" : "",
+    "applicationName" : "%AUTHZ_POLICY_SET%",
+    "actionValues" : { },
+    "resources" : [ "doorlock://myhouse/front" ],
+    "subject" : {
+      "type" : "NONE"
+    },
+    "resourceTypeUuid" : "%AUTHZ_RESOURCE_TYPE_DOORLOCK%"
+} 

@@ -1,0 +1,7 @@
+{
+  "application": "SmartHome",
+  "resource": "doorlock://myhouse/front",
+  "subject": {
+    "ssoToken": "%SSO_TOKEN%"
+  }
+}

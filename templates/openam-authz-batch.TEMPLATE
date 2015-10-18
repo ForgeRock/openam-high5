@@ -1,0 +1,2 @@
+#Create a realm
+create-realm --realm %OPENAM_AUTHZ_REALM%

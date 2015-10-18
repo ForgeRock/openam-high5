@@ -1,0 +1,9 @@
+{
+  "application": "SmartHome",
+  "resources": [
+    "doorlock://myhouse/front?_action=LOCK"
+  ],
+  "subject": {
+    "ssoToken": "%SSO_TOKEN%"
+  }
+}

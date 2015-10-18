@@ -1,0 +1,14 @@
+{
+    "name" : "SmartHome",
+    "applicationType" : "iPlanetAMWebAgentService",
+    "description" : "Controlling objects in a smart home.",
+    "resourceTypeUuids" : [ "%AUTHZ_RESOURCE_TYPE_DOORLOCK%", "%AUTHZ_RESOURCE_TYPE_TV%" ],
+    "subjects" : [ "Policy", "NOT", "OR", "JwtClaim", "AuthenticatedUsers", "AND", "Identity", "NONE" ],
+    "entitlementCombiner" : "DenyOverride",
+    "saveIndex" : null,
+    "searchIndex" : null,
+    "resourceComparator" : null,
+    "attributeNames" : [ ],
+    "editable" : true,
+    "conditions" : [ "LEAuthLevel", "Policy", "Script", "AuthenticateToService", "SimpleTime", "AMIdentityMembership", "OR", "IPv6", "IPv4", "SessionProperty", "AuthScheme", "AuthLevel", "NOT", "AuthenticateToRealm", "AND", "ResourceEnvIP", "LDAPFilter", "OAuth2Scope", "Session" ]
+}

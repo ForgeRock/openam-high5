@@ -1,0 +1,11 @@
+{
+  "patterns": [
+    "tv://*/*"
+  ],
+  "name": "tv",
+  "actions": {
+    "ENABLE": true,
+    "DISABLE": true,
+    "SHARE_SCREEN": true
+  }
+}

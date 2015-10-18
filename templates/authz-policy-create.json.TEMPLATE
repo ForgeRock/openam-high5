@@ -1,0 +1,15 @@
+{
+  "resources": [
+    "http://example.com:80/index.html"
+  ],
+  "resourceTypeUuid" : "6f39dad0-50c3-4031-b8e6-ea1a215de09b",
+  "name": "testREST",
+  "subject": {
+    "type": "AuthenticatedUsers"
+  },
+  "active": true,
+  "actionValues": {
+    "GET": true,
+    "POST": false
+  }
+}

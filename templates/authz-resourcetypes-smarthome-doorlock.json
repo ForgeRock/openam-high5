@@ -1,0 +1,10 @@
+{
+  "patterns": [
+    "doorlock://*/*"
+  ],
+  "name": "doorlock",
+  "actions": {
+    "LOCK": true,
+    "UNLOCK": true
+  }
+}
