@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash -x
 
 . ../platform.properties
 
@@ -30,11 +30,11 @@ compileJava() {
 # This should be done using ant once approved to run on INT
 #
 
-  for src_file in `find . -name *.java`
+  for src_file in `find . -name *.java | grep -i oauth`
   do
     printf "=====================================================================\n"
     printf "*** Compiling ${src_file}\n"
-    ${JAVA_HOME}/bin/javac -classpath ${CLASSPATH} ${src_file} -d ${OPENAM_CLASSES_DIR}
+    ${JAVA_HOME}/bin/javac -classpath ${CLASSPATH} ${src_file} -d ${OPENAM_WEBAPP_CLASSES_DIR}
     if [ "$?" -ne "0" ]; then
         echo "*** Error: During compilation"
         exit
