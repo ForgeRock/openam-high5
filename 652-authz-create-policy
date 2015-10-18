@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 . ./platform.properties
 . ./functions
@@ -74,6 +74,31 @@ listResourceTypes() {
 }
 
 #---------------------------------------------
+importResourceType() {
+#---------------------------------------------
+  REALM=$1
+  FILE=$2
+
+  SSO_TOKEN=`authAdmin`
+
+  REST_RESOURCETYPES_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/resourcetypes?_action=create&_prettyPrint=true"
+  printf "INFO: Importing resource type from file ${FILE} ...\n"
+  printf "INFO: [Request-URL] ${REST_RESOURCETYPES_URL}\n"
+  printf "INFO: [Request-JSON] `cat ${FILE}`\n"
+
+  RES=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @${FILE} "${REST_RESOURCETYPES_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES}\n"
+  fi
+}
+
+
+#---------------------------------------------
 createSmartHomePolicies() {
 #---------------------------------------------
   USER=$1
@@ -133,41 +158,53 @@ createSmartHomePolicies() {
 
   # --------------------------------------------------------------------------------
   #
-  # Create resource type Doorlock and TV
+  # Create resource types
   #
   # --------------------------------------------------------------------------------
-  REST_RESOURCETYPES_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/resourcetypes?_action=create&_prettyPrint=true"
+  #REST_RESOURCETYPES_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/resourcetypes?_action=create&_prettyPrint=true"
   printf "=============================================================\n"
-  printf "INFO: [Step 2] Creating the resource type doorlock ...\n"
+  printf "INFO: [Step 2-1] Creating the resource type doorlock ...\n"
   printf "=============================================================\n"
-  printf "INFO: [Request-URL] ${REST_RESOURCETYPES_URL}\n"
-  printf "INFO: [Request-JSON] `cat templates/authz-resourcetypes-smarthome-doorlock.json`\n"
+  #printf "INFO: [Request-URL] ${REST_RESOURCETYPES_URL}\n"
+  #printf "INFO: [Request-JSON] `cat templates/authz-resourcetypes-smarthome-doorlock.json`\n"
+  importResourceType ${REALM} templates/authz-resourcetypes-smarthome-doorlock.json
 
-  RES2=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @templates/authz-resourcetypes-smarthome-doorlock.json "${REST_RESOURCETYPES_URL}"`
-  RC=$?
+  #RES2=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @templates/authz-resourcetypes-smarthome-doorlock.json "${REST_RESOURCETYPES_URL}"`
+  #RC=$?
 
-  if [ ${RC} != 0 ]; then
-    printf "ERROR: curl returned ${RC}.\n"
-    return 1
-  else
-    printf "INFO: [Response] ${RES2}\n"
-  fi
+  #if [ ${RC} != 0 ]; then
+  #  printf "ERROR: curl returned ${RC}.\n"
+  #  return 1
+  #else
+  #  printf "INFO: [Response] ${RES2}\n"
+  #fi
 
   printf "=============================================================\n"
-  printf "INFO: [Step 3] Creating the resource type TV ...\n"
+  printf "INFO: [Step 2-2] Creating the resource type TV ...\n"
   printf "=============================================================\n"
-  printf "INFO: [Request-URL] ${REST_RESOURCETYPES_URL}\n"
-  printf "INFO: [Request-JSON] `cat templates/authz-resourcetypes-smarthome-tv.json`\n"
+  #printf "INFO: [Request-URL] ${REST_RESOURCETYPES_URL}\n"
+  #printf "INFO: [Request-JSON] `cat templates/authz-resourcetypes-smarthome-tv.json`\n"
+  importResourceType ${REALM} templates/authz-resourcetypes-smarthome-tv.json
 
-  RES3=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @templates/authz-resourcetypes-smarthome-tv.json "${REST_RESOURCETYPES_URL}"`
-  RC=$?
+  #RES3=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @templates/authz-resourcetypes-smarthome-tv.json "${REST_RESOURCETYPES_URL}"`
+  #RC=$?
 
-  if [ ${RC} != 0 ]; then
-    printf "ERROR: curl returned ${RC}.\n"
-    return 1
-  else
-    printf "INFO: [Response] ${RES3}\n"
-  fi
+  #if [ ${RC} != 0 ]; then
+  #  printf "ERROR: curl returned ${RC}.\n"
+  #  return 1
+  #else
+  #  printf "INFO: [Response] ${RES3}\n"
+  #fi
+
+  printf "=============================================================\n"
+  printf "INFO: [Step 2-3] Creating the resource type refrigerator ...\n"
+  printf "=============================================================\n"
+  importResourceType ${REALM} templates/authz-resourcetypes-smarthome-refrigerator.json
+
+  printf "=============================================================\n"
+  printf "INFO: [Step 2-4] Creating the resource type winecabinet ...\n"
+  printf "=============================================================\n"
+  importResourceType ${REALM} templates/authz-resourcetypes-smarthome-winecabinet.json
 
   # --------------------------------------------------------------------------------
   #
