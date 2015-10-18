@@ -2,7 +2,7 @@
     "name" : "SmartHome",
     "applicationType" : "iPlanetAMWebAgentService",
     "description" : "Controlling objects in a smart home.",
-    "resourceTypeUuids" : [ "%AUTHZ_RESOURCE_TYPE_DOORLOCK%", "%AUTHZ_RESOURCE_TYPE_TV%" ],
+    "resourceTypeUuids" : [ "%AUTHZ_RESOURCE_TYPE_DOORLOCK%", "%AUTHZ_RESOURCE_TYPE_TV%", "%AUTHZ_RESOURCE_TYPE_WINECABINET%", "%AUTHZ_RESOURCE_TYPE_REFRIGERATOR%"],
     "subjects" : [ "Policy", "NOT", "OR", "JwtClaim", "AuthenticatedUsers", "AND", "Identity", "NONE" ],
     "entitlementCombiner" : "DenyOverride",
     "saveIndex" : null,

@@ -1,0 +1,17 @@
+{
+    "name" : "Winecabinet",
+    "active" : true,
+    "description" : "",
+    "applicationName" : "%AUTHZ_POLICY_SET%",
+    "actionValues" : {
+      "APPROVE ORDERS" : true,
+      "ENABLE ALERTS" : true,
+      "INVENTORY" : true
+    },
+    "resources" : [ "winecabinet://myhouse/winebar" ],
+    "subject" : {
+      "type" : "Identity",
+      "subjectValues" : [ "id=bob,ou=user,o=authzrealm,ou=services,dc=sso-config,dc=com" ]
+    },
+    "resourceTypeUuid" : "%AUTHZ_RESOURCE_TYPE_WINECABINET%"
+}

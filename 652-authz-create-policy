@@ -97,6 +97,30 @@ importResourceType() {
   fi
 }
 
+#---------------------------------------------
+importPolicy() {
+#---------------------------------------------
+  REALM=$1
+  FILE=$2
+
+  SSO_TOKEN=`authAdmin`
+
+  REST_POLICIES_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=create&_prettyPrint=true"
+  printf "INFO: Importing policy from file ${FILE} ...\n"
+  printf "INFO: [Request-URL] ${REST_POLICIES_URL}\n"
+  printf "INFO: [Request-JSON]\n`cat ${FILE}`\n"
+
+  RES=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @${FILE} "${REST_POLICIES_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response]\n${RES}\n"
+  fi
+}
+
 
 #---------------------------------------------
 createSmartHomePolicies() {
@@ -220,9 +244,14 @@ createSmartHomePolicies() {
   #
   UUID_DOORLOCK=`getResourceTypeUUID doorlock ${REALM} ${SSO_TOKEN}`
   UUID_TV=`getResourceTypeUUID tv ${REALM} ${SSO_TOKEN}`
+  UUID_WINECABINET=`getResourceTypeUUID winecabinet ${REALM} ${SSO_TOKEN}`
+  UUID_FRIGE=`getResourceTypeUUID refrigerator ${REALM} ${SSO_TOKEN}`
+
   printf "INFO: UUID_DOORLOCK=${UUID_DOORLOCK}\n"
   printf "INFO: UUID_TV=${UUID_TV}\n"
-  ${SED} -e "s/%AUTHZ_RESOURCE_TYPE_DOORLOCK%/${UUID_DOORLOCK}/g" -e "s/%AUTHZ_RESOURCE_TYPE_TV%/${UUID_TV}/g" templates/authz-policyset-smarthome.json.TEMPLATE > ${TMP_BASE}/authz-policyset-smarthome.json
+  printf "INFO: UUID_WINECABINET=${UUID_WINECABINET}\n"
+  printf "INFO: UUID_FRIDGE=${UUID_FRIDGE}\n"
+  ${SED} -e "s/%AUTHZ_RESOURCE_TYPE_DOORLOCK%/${UUID_DOORLOCK}/g" -e "s/%AUTHZ_RESOURCE_TYPE_TV%/${UUID_TV}/g" -e "s/%AUTHZ_RESOURCE_TYPE_WINECABINET%/${UUID_WINECABINET}/g" -e "s/%AUTHZ_RESOURCE_TYPE_REFRIGERATOR%/${UUID_FRIGE}/g" templates/authz-policyset-smarthome.json.TEMPLATE > ${TMP_BASE}/authz-policyset-smarthome.json
   printf "INFO: [Request-URL] ${REST_APPLICATIONS_URL}\n"
   printf "INFO: [Request-JSON] `cat ${TMP_BASE}/authz-policyset-smarthome.json`\n"
 
@@ -241,34 +270,49 @@ createSmartHomePolicies() {
   # Create a policy
   #
   # --------------------------------------------------------------------------------
-  REST_POLICIES_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=create&_prettyPrint=true"
-  printf "=============================================================\n"
-  printf "INFO: [Step 5] Creating a policy ...\n"
-  printf "=============================================================\n"
+  #REST_POLICIES_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=create&_prettyPrint=true"
 
-  URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/policies?_queryFilter=true&_prettyPrint=true"
-  RES=`${CURL} -s --insecure --request GET --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" "${URL}"`
-  printf "INFO: [Response] ${RES}\n"
+  #URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/policies?_queryFilter=true&_prettyPrint=true"
+  #RES=`${CURL} -s --insecure --request GET --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" "${URL}"`
+  #printf "INFO: [Response] ${RES}\n"
   #
   # Get the UUIDs of the resource sets
   #
-  UUID_DOORLOCK=`getResourceTypeUUID doorlock ${REALM} ${SSO_TOKEN}`
-  UUID_TV=`getResourceTypeUUID tv ${REALM} ${SSO_TOKEN}`
+  #UUID_DOORLOCK=`getResourceTypeUUID doorlock ${REALM} ${SSO_TOKEN}`
+  #UUID_TV=`getResourceTypeUUID tv ${REALM} ${SSO_TOKEN}`
   #printf "INFO: UUID_DOORLOCK=${UUID_DOORLOCK}\n"
   #printf "INFO: UUID_TV=${UUID_TV}\n"
+
+  printf "=============================================================\n"
+  printf "INFO: [Step 5-1] Creating a policy for doorlock ...\n"
+  printf "=============================================================\n"
   ${SED} -e "s/%AUTHZ_RESOURCE_TYPE_DOORLOCK%/${UUID_DOORLOCK}/g" -e "s/%AUTHZ_POLICY_SET%/SmartHome/g" templates/authz-policy-smarthome-frontdoor.json.TEMPLATE > ${TMP_BASE}/authz-policy-smarthome-frontdoor.json
-  printf "INFO: [Request-URL] ${REST_POLICIES_URL}\n"
-  printf "INFO: [Request-JSON] `cat ${TMP_BASE}/authz-policy-smarthome-frontdoor.json`\n"
+  importPolicy ${REALM} ${TMP_BASE}/authz-policy-smarthome-frontdoor.json
 
-  RES5=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @${TMP_BASE}/authz-policy-smarthome-frontdoor.json "${REST_POLICIES_URL}"`
-  RC=$?
+  printf "=============================================================\n"
+  printf "INFO: [Step 5-2] Creating a policy for homecinema ...\n"
+  printf "=============================================================\n"
+  ${SED} -e "s/%AUTHZ_RESOURCE_TYPE_TV%/${UUID_TV}/g" -e "s/%AUTHZ_POLICY_SET%/SmartHome/g" templates/authz-policy-smarthome-homecinema.json.TEMPLATE > ${TMP_BASE}/authz-policy-smarthome-homecinema.json
+  importPolicy ${REALM} ${TMP_BASE}/authz-policy-smarthome-homecinema.json
 
-  if [ ${RC} != 0 ]; then
-    printf "ERROR: curl returned ${RC}.\n"
-    return 1
-  else
-    printf "INFO: [Response] ${RES5}\n"
-  fi
+  printf "=============================================================\n"
+  printf "INFO: [Step 5-3] Creating a policy for winecabinet ...\n"
+  printf "=============================================================\n"
+  ${SED} -e "s/%AUTHZ_RESOURCE_TYPE_WINECABINET%/${UUID_WINECABINET}/g" -e "s/%AUTHZ_POLICY_SET%/SmartHome/g" templates/authz-policy-smarthome-winecabinet.json.TEMPLATE > ${TMP_BASE}/authz-policy-smarthome-winecabinet.json
+  importPolicy ${REALM} ${TMP_BASE}/authz-policy-smarthome-winecabinet.json
+
+  #printf "INFO: [Request-URL] ${REST_POLICIES_URL}\n"
+  #printf "INFO: [Request-JSON] `cat ${TMP_BASE}/authz-policy-smarthome-frontdoor.json`\n"
+
+  #RES5=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @${TMP_BASE}/authz-policy-smarthome-frontdoor.json "${REST_POLICIES_URL}"`
+  #RC=$?
+
+  #if [ ${RC} != 0 ]; then
+  #  printf "ERROR: curl returned ${RC}.\n"
+  #  return 1
+  #else
+  #  printf "INFO: [Response] ${RES5}\n"
+  #fi
 }
 
 #---------------------------------------------

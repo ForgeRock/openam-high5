@@ -3,10 +3,14 @@
     "active" : true,
     "description" : "",
     "applicationName" : "%AUTHZ_POLICY_SET%",
-    "actionValues" : { },
+    "actionValues" : {
+      "LOCK" : true,
+      "UNLOCK" : true
+    },
     "resources" : [ "doorlock://myhouse/front" ],
     "subject" : {
-      "type" : "NONE"
+      "type" : "Identity",
+      "subjectValues" : [ "id=SmithFamily,ou=group,o=authzrealm,ou=services,dc=sso-config,dc=com" ]
     },
     "resourceTypeUuid" : "%AUTHZ_RESOURCE_TYPE_DOORLOCK%"
 } 
