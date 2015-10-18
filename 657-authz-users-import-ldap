@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+OPENAM_LDAPSEARCH=${OPENAM_CONFIG_BASE}/opends/bin/ldapsearch
+OPENAM_LDAPMODIFY=${OPENAM_CONFIG_BASE}/opends/bin/ldapmodify
+
+#---------------------------------------------
+modifyTemplate() {
+#---------------------------------------------
+  ${SED} -e "s/%USERS_BASE_DN%/${OPENAM_DS_USERS_BASE_DN}/g" -e "s/%GROUPS_BASE_DN%/${OPENAM_DS_GROUPS_BASE_DN}/g" templates/authz_subjects.ldif.TEMPLATE > ${TMP_BASE}/authz_subjects.ldif
+}
+
+#---------------------------------------------
+importSubjects() {
+#---------------------------------------------
+  ${OPENAM_LDAPMODIFY} -h localhost -p ${OPENAM_DS_PORT} -D ${OPENAM_DS_ADMIN} -w ${OPENAM_DS_ADMIN_PASSWORD} -a -c -f ${TMP_BASE}/authz_subjects.ldif
+}
+
+modifyTemplate
+importSubjects
