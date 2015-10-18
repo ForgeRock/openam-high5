@@ -1,0 +1,52 @@
+#!/bin/bash -x
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+getResourceTypeUUID() {
+#---------------------------------------------
+  RES_TYPE=$1
+  REALM=$2
+  SSO_TOKEN=$3
+
+  #Search for the resource type with the given name and return the UUID
+  URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/resourcetypes?_queryFilter=name%20eq%20%22${RES_TYPE}%22&_prettyPrint=true"
+  RES=`${CURL} -s --insecure --request GET --header "iPlanetDirectoryPro: ${SSO_TOKEN}" "${URL}"`
+  UUID=`echo ${RES} | /opt/misc/jq --raw-output '.result[].uuid'`
+  #printf "INFO: UUID=${UUID}\n"
+  echo ${UUID}
+}
+
+#---------------------------------------------
+authUser() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+  REALM=$3
+
+  REST_AUTH_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate?realm=${REALM}&_prettyPrint=true"
+
+  RES1=`${CURL} -s --insecure --request POST --header "X-OpenAM-Username: ${USER}" --header "X-OpenAM-Password: ${PASSWORD}" --header "Content-Type: application/json" --data "{}" "${REST_AUTH_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    return 1
+  fi
+ 
+  SSO_TOKEN=`echo ${RES1} | /opt/misc/jq --raw-output '.tokenId'`
+  if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
+    echo ${SSO_TOKEN}
+    return 0
+  else
+    return 1
+  fi
+}
+
+#---------------------------------------------
+authAdmin() {
+#---------------------------------------------
+  # Authenticate the admin against the root realm (rather than a sub realm)
+  authUser ${OPENAM_ADMIN} ${OPENAM_ADMIN_PASSWORD} ${OPENAM_ROOT_REALM}
+}

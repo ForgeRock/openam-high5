@@ -1,0 +1,241 @@
+#!/bin/bash -x
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+#---------------------------------------------
+getResourceTypeUUID() {
+#---------------------------------------------
+  RES_TYPE=$1
+  REALM=$2
+  SSO_TOKEN=$3
+
+  #Search for the resource type with the given name and return the UUID
+  URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/resourcetypes?_queryFilter=name%20eq%20%22${RES_TYPE}%22&_prettyPrint=true"
+  RES=`${CURL} -s --insecure --request GET --header "iPlanetDirectoryPro: ${SSO_TOKEN}" "${URL}"`
+  UUID=`echo ${RES} | /opt/misc/jq --raw-output '.result[].uuid'`
+  #printf "INFO: UUID=${UUID}\n"
+  echo ${UUID}
+}
+
+#---------------------------------------------
+authUser() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+  REALM=$3
+
+  REST_AUTH_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate?realm=${REALM}&_prettyPrint=true"
+
+  RES1=`${CURL} -s --insecure --request POST --header "X-OpenAM-Username: ${USER}" --header "X-OpenAM-Password: ${PASSWORD}" --header "Content-Type: application/json" --data "{}" "${REST_AUTH_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    return 1
+  fi
+ 
+  SSO_TOKEN=`echo ${RES1} | /opt/misc/jq --raw-output '.tokenId'`
+  if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
+    echo ${SSO_TOKEN}
+    return 0
+  else
+    return 1
+  fi
+}
+
+#---------------------------------------------
+authAdmin() {
+#---------------------------------------------
+  # Authenticate the admin against the root realm (rather than a sub realm)
+  authUser ${OPENAM_ADMIN} ${OPENAM_ADMIN_PASSWORD} ${OPENAM_ROOT_REALM}
+}
+
+#---------------------------------------------
+listResourceTypes() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+  REALM=$3
+
+  SSO_TOKEN=`authAdmin`
+
+  URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/resourcetypes/?_queryFilter=true&_prettyPrint=true"
+  RES=`${CURL} -s --insecure --request GET --header "iPlanetDirectoryPro: ${SSO_TOKEN}" "${URL}"`
+
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES}\n" 
+    return 0
+  fi
+}
+
+#---------------------------------------------
+createSmartHomePolicies() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+  REALM=$3
+
+  # --------------------------------------------------------------------------------
+  #
+  # Third send in the credentials as required by the DeviceID (Match)
+  #
+  # --------------------------------------------------------------------------------
+  #printf "=============================================================\n"
+  #printf "INFO: [Step 3] Provide callbacks for the DeviceId (Match) module ...\n"
+  #printf "=============================================================\n"
+  #Using module DeviceId (Match)
+  #Build the json payload and write to a file
+  #${SED} -e "s/%AUTHID%/${JWT_TOKEN}/g" -e "s/%TELEPHONENUMBER%/${TELEPHONENUMBER}/g" ${DEVICEPRINT_CALLBACK_FILE} > ${TMP_BASE}/callback-deviceid-step3.json
+  #printf "INFO: [Request-URL] ${REST_AUTH_URL}\n"
+  #printf "INFO: [Request-JSON] `cat ${TMP_BASE}/callback-deviceid-step3.json`\n"
+
+  #RES3=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --data @${TMP_BASE}/callback-deviceid-step3.json "${REST_AUTH_URL}"`
+
+  #RC=$?
+
+
+  # --------------------------------------------------------------------------------
+  #
+  # First authenticate as amadmin
+  #
+  # --------------------------------------------------------------------------------
+  # Authenticate admin against the root realm
+  REST_AUTH_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/authenticate?_prettyPrint=true"
+  printf "=============================================================\n"
+  printf "INFO: [Step 1] Authenticating as amadmin ...\n"
+  printf "=============================================================\n"
+  printf "INFO: [Request-URL] ${REST_AUTH_URL}\n"
+
+  RES1=`${CURL} -s --insecure --request POST --header "X-OpenAM-Username: ${USER}" --header "X-OpenAM-Password: ${PASSWORD}" --header "Content-Type: application/json" --data "{}" "${REST_AUTH_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES1}\n"
+  fi
+ 
+  SSO_TOKEN=`echo ${RES1} | /opt/misc/jq --raw-output '.tokenId'`
+  if [ ! -z ${SSO_TOKEN} ] && [ ${SSO_TOKEN} != "null" ]; then
+    printf "INFO: Authentication successful.\n"
+    printf "INFO: SSO token is ${SSO_TOKEN}\n"
+    # return 0
+  else
+    printf "INFO: Authentication failed.\n"
+    return 1
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # Create resource type Doorlock and TV
+  #
+  # --------------------------------------------------------------------------------
+  REST_RESOURCETYPES_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/resourcetypes?_action=create&_prettyPrint=true"
+  printf "=============================================================\n"
+  printf "INFO: [Step 2] Creating the resource type doorlock ...\n"
+  printf "=============================================================\n"
+  printf "INFO: [Request-URL] ${REST_RESOURCETYPES_URL}\n"
+  printf "INFO: [Request-JSON] `cat templates/authz-resourcetypes-smarthome-doorlock.json`\n"
+
+  RES2=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @templates/authz-resourcetypes-smarthome-doorlock.json "${REST_RESOURCETYPES_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES2}\n"
+  fi
+
+  printf "=============================================================\n"
+  printf "INFO: [Step 3] Creating the resource type TV ...\n"
+  printf "=============================================================\n"
+  printf "INFO: [Request-URL] ${REST_RESOURCETYPES_URL}\n"
+  printf "INFO: [Request-JSON] `cat templates/authz-resourcetypes-smarthome-tv.json`\n"
+
+  RES3=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @templates/authz-resourcetypes-smarthome-tv.json "${REST_RESOURCETYPES_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES3}\n"
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # Create the application (resource set)
+  #
+  # --------------------------------------------------------------------------------
+  REST_APPLICATIONS_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/applications?_action=create&_prettyPrint=true"
+  printf "=============================================================\n"
+  printf "INFO: [Step 4] Creating the application (resource set) ...\n"
+  printf "=============================================================\n"
+  #
+  # Get the UUIDs of the resource sets
+  #
+  UUID_DOORLOCK=`getResourceTypeUUID doorlock ${REALM} ${SSO_TOKEN}`
+  UUID_TV=`getResourceTypeUUID tv ${REALM} ${SSO_TOKEN}`
+  printf "INFO: UUID_DOORLOCK=${UUID_DOORLOCK}\n"
+  printf "INFO: UUID_TV=${UUID_TV}\n"
+  ${SED} -e "s/%AUTHZ_RESOURCE_TYPE_DOORLOCK%/${UUID_DOORLOCK}/g" -e "s/%AUTHZ_RESOURCE_TYPE_TV%/${UUID_TV}/g" templates/authz-policyset-smarthome.json.TEMPLATE > ${TMP_BASE}/authz-policyset-smarthome.json
+  printf "INFO: [Request-URL] ${REST_APPLICATIONS_URL}\n"
+  printf "INFO: [Request-JSON] `cat ${TMP_BASE}/authz-policyset-smarthome.json`\n"
+
+  RES4=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @${TMP_BASE}/authz-policyset-smarthome.json "${REST_APPLICATIONS_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES4}\n"
+  fi
+
+  # --------------------------------------------------------------------------------
+  #
+  # Create a policy
+  #
+  # --------------------------------------------------------------------------------
+  REST_POLICIES_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=create&_prettyPrint=true"
+  printf "=============================================================\n"
+  printf "INFO: [Step 5] Creating a policy ...\n"
+  printf "=============================================================\n"
+
+  URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/policies?_queryFilter=true&_prettyPrint=true"
+  RES=`${CURL} -s --insecure --request GET --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" "${URL}"`
+  printf "INFO: [Response] ${RES}\n"
+  #
+  # Get the UUIDs of the resource sets
+  #
+  UUID_DOORLOCK=`getResourceTypeUUID doorlock ${REALM} ${SSO_TOKEN}`
+  UUID_TV=`getResourceTypeUUID tv ${REALM} ${SSO_TOKEN}`
+  #printf "INFO: UUID_DOORLOCK=${UUID_DOORLOCK}\n"
+  #printf "INFO: UUID_TV=${UUID_TV}\n"
+  ${SED} -e "s/%AUTHZ_RESOURCE_TYPE_DOORLOCK%/${UUID_DOORLOCK}/g" -e "s/%AUTHZ_POLICY_SET%/SmartHome/g" templates/authz-policy-smarthome-frontdoor.json.TEMPLATE > ${TMP_BASE}/authz-policy-smarthome-frontdoor.json
+  printf "INFO: [Request-URL] ${REST_POLICIES_URL}\n"
+  printf "INFO: [Request-JSON] `cat ${TMP_BASE}/authz-policy-smarthome-frontdoor.json`\n"
+
+  RES5=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @${TMP_BASE}/authz-policy-smarthome-frontdoor.json "${REST_POLICIES_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES5}\n"
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+createSmartHomePolicies ${OPENAM_ADMIN} ${OPENAM_ADMIN_PASSWORD} ${OPENAM_AUTHZ_REALM}
+

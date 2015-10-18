@@ -1,0 +1,73 @@
+#!/bin/bash -x
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+. ./651-authz-base
+
+#---------------------------------------------
+extractDecision() {
+#---------------------------------------------
+  RESPONSE="$1"
+
+#[ {
+#  "advices" : { },
+#  "ttl" : 9223372036854775807,
+#  "resource" : "doorlock://myhouse/front",
+#  "actions" : {
+#    "LOCK" : true,
+#    "UNLOCK" : true
+#  },
+#  "attributes" : { }
+#} ]
+
+  DECISION=`echo "${RESPONSE}" | /opt/misc/jq --raw-output '.[0].actions'`
+  echo "INFO: Decision is "${DECISION}".\n"
+}
+
+#---------------------------------------------
+evaluatePolicyDoorlock() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+  REALM=$3
+
+  ADMIN_SSO_TOKEN=`authAdmin`
+  USER_SSO_TOKEN=`authUser ${USER} ${PASSWORD} ${REALM}`
+
+  #URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=evaluateTree&_prettyPrint=true"
+  #URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=evaluateTree&_prettyPrint=true"
+  ${SED} -e "s/%SSO_TOKEN%/${USER_SSO_TOKEN}/g" templates/authz-evaluation-request-tree.json.TEMPLATE > ${TMP_BASE}/authz-evaluation-request-tree.json
+  #URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=evaluateTree&_prettyPrint=true"
+  URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=evaluateTree"
+  RES=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --header "iPlanetDirectoryPro: ${ADMIN_SSO_TOKEN}" --data @${TMP_BASE}/authz-evaluation-request-tree.json "${URL}"`
+
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES}\n"
+    extractDecision ${RES}
+  fi
+
+  ${SED} -e "s/%SSO_TOKEN%/${USER_SSO_TOKEN}/g" templates/authz-evaluation-request.json.TEMPLATE > ${TMP_BASE}/authz-evaluation-request.json
+  #URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=evaluate&_prettyPrint=true"
+  URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=evaluate"
+  RES=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --header "iPlanetDirectoryPro: ${ADMIN_SSO_TOKEN}" --data @${TMP_BASE}/authz-evaluation-request.json "${URL}"`
+  RC=$?
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response] ${RES}\n"
+    extractDecision ${RES}
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+evaluatePolicyDoorlock demo changeit ${OPENAM_AUTHZ_REALM}
+

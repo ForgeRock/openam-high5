@@ -1,0 +1,53 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+#. ./functions-tomcat
+. ./functions-openam
+
+#----------------------------------------------------------
+configureAuthzRealm() {
+#----------------------------------------------------------
+  printf "INFO: Configuring authz realm.\n"
+
+  ${SED} -e "s/%OPENAM_AUTHZ_REALM%/${OPENAM_AUTHZ_REALM}/g" ${INSTALL_SCRIPTS_BASE}/templates/openam-authz-batch.TEMPLATE > ${TMP_BASE}/openam-authz-batch.ssoadm
+  if [ $? != 0 ]; then
+    printf "ERROR: Error using SED (${SED}).\n"
+    returnFailure
+  fi
+  
+ ${OPENAM_SSOADM} do-batch --debug -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --batchfile ${TMP_BASE}/openam-authz-batch.ssoadm --continue --batchstatus ${TMP_BASE}/openam-authz-batch.ssoadm.STATUS
+  if [ $? != 0 ]; then
+    printf "ERROR: Error configuring authz realm. See ${TMP_BASE}/openam-authz-batch.ssoadm.STATUS for ssoadm return codes.\n"
+  else
+    printf "INFO: Successfully configured authz realm.\n"
+  fi
+}
+
+#----------------------------------------------------------
+removeAuthzRealm() {
+#----------------------------------------------------------
+  # Remove the realm
+  printf "INFO: Removing realm ${OPENAM_AUTHZ_REALM}.\n"
+  ${OPENAM_SSOADM} delete-realm -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --realm ${OPENAM_AUTHZ_REALM}
+  if [ $? != 0 ]; then
+    printf "ERROR: Error removing realm ${OPENAM_AUTHZ_REALM}.\n"
+  else
+    printf "INFO: Successfully removed realm ${OPENAM_AUTHZ_REALM}.\n"
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+printScriptStart
+if [ $# == 1 ] && [ $1 == "remove" ]; then
+  printf "INFO: Mode is REMOVE.\n"
+  removeAuthzRealm
+else
+  configureAuthzRealm
+fi
+#stopTomcat
+#startTomcat
+printScriptEnd
+
