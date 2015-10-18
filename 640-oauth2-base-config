@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 . ./platform.properties
 . ./functions
@@ -9,7 +9,9 @@
 createOAuth2Client() {
 #----------------------------------------------------------
   printf "INFO: Creating OAuth2 client.\n"
-  ${OPENAM_SSOADM} create-agent  -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --agentname ${OAUTH2_CLIENT_ID} --agenttype OAuth2Client --realm ${OPENAM_BASE_REALM} --attributevalues userpassword=${OAUTH2_CLIENT_PASSWORD} com.forgerock.openam.oauth2provider.scopes="[0]=openid|en|OpenID" com.forgerock.openam.oauth2provider.scopes="[1]=profile|en|Your Profile" com.forgerock.openam.oauth2provider.scopes="[2]=email|en|Your Email" com.forgerock.openam.oauth2provider.defaultScopes="[0]=openid|en|OpenID"
+  ${OPENAM_SSOADM} create-agent  -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --agentname ${OAUTH2_CLIENT_ID} --agenttype OAuth2Client --realm ${OPENAM_BASE_REALM} --attributevalues userpassword=${OAUTH2_CLIENT_PASSWORD} com.forgerock.openam.oauth2provider.scopes="[0]=openid|en|OpenID" com.forgerock.openam.oauth2provider.scopes="[1]=profile|en|Your Profile" com.forgerock.openam.oauth2provider.scopes="[2]=email|en|Your Email" com.forgerock.openam.oauth2provider.defaultScopes="[0]=openid|en|OpenID" com.forgerock.openam.oauth2provider.idTokenSignedResponseAlg="${OAUTH2_CLIENT_ID_TOKEN_SIGNED_RESPONSE_ALGORITHM}" com.forgerock.openam.oauth2provider.redirectionURIs="[0]=${OAUTH2_CLIENT_REDIRECTION_URI}"
+  #${OPENAM_SSOADM} create-agent  -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --agentname ${OAUTH2_CLIENT_ID} --agenttype OAuth2Client --realm ${OPENAM_BASE_REALM} --attributevalues userpassword=${OAUTH2_CLIENT_PASSWORD} com.forgerock.openam.oauth2provider.scopes="[0]=openid|en|OpenID" com.forgerock.openam.oauth2provider.scopes="[1]=profile|en|Your Profile" com.forgerock.openam.oauth2provider.scopes="[2]=email|en|Your Email" com.forgerock.openam.oauth2provider.defaultScopes="[0]=openid|en|OpenID" com.forgerock.openam.oauth2provider.idTokenSignedResponseAlg="${OAUTH2_CLIENT_ID_TOKEN_SIGNED_RESPONSE_ALGORITHM}" 
+
   RC=$?
   if [ ${RC} != 0 ]; then
     printf "ERROR: ssoadm returned ${RC}.\n"

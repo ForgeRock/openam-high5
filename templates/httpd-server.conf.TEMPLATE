@@ -108,6 +108,11 @@ SSLCryptoDevice builtin
                 #ProxyPassReverse https://SERVER-2:8181/suisseid
         </Location>
 
+	<Location /openid>
+                ProxyPass https://%SERVER_FQDN%:%TOMCAT_HTTPS_PORT%/openid
+                ProxyPassReverse https://%SERVER_FQDN%:%TOMCAT_HTTPS_PORT%/openid
+        </Location>
+
         <Directory proxy:*>
 	  AddDefaultCharset Off
 	  SSLRequireSSL
