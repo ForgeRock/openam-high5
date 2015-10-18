@@ -1,0 +1,11 @@
+{
+  "patterns": [
+    "winecabinet://*/*"
+  ],
+  "name": "winecabinet",
+  "actions": {
+    "ENABLE ALERTS": true,
+    "INVENTORY": true,
+    "APPROVE ORDERS": true
+  }
+}

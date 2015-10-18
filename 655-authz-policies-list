@@ -1,0 +1,32 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+. ./651-authz-base
+
+#---------------------------------------------
+listPolicies() {
+#---------------------------------------------
+  REALM=$1
+
+  SSO_TOKEN=`authAdmin`
+
+  printf "INFO: Listing policies for realm ${REALM} ...\n"
+  URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_queryFilter=true&_prettyPrint=true"
+  RES=`${CURL} -s --insecure --request GET --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" "${URL}"`
+  RC=$?
+
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response]\n${RES}\n"
+  fi
+}
+
+listPolicies ${OPENAM_AUTHZ_REALM}
+
+

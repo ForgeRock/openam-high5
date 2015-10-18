@@ -1,0 +1,12 @@
+{
+  "patterns": [
+    "fridge://*/*"
+  ],
+  "name": "refrigerator",
+  "actions": {
+    "INVENTORY": true,
+    "APPROVE ORDERS": true,
+    "ENABLE AUTOMATIC ORDERS": true,
+    "DISABLE AUTOMATIC ORDERS": true
+  }
+}
