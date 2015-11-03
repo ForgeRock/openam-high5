@@ -1,0 +1,7 @@
+{
+  "application": "SmartHome",
+  "resource": "tv://myhouse/homecinema",
+  "subject": {
+    "ssoToken": "%SSO_TOKEN%"
+  }
+}
