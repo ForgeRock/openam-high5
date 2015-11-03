@@ -1,0 +1,60 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+. ./651-authz-base
+
+#---------------------------------------------
+evaluatePolicyTV() {
+#---------------------------------------------
+  USER=$1
+  PASSWORD=$2
+  REALM=$3
+
+  ADMIN_SSO_TOKEN=`authAdmin`
+  if [ -z "${ADMIN_SSO_TOKEN}" ]; then
+    printf "ERROR: Admin SSO token is null. Admin authentication must have failed. Aborting.\n"
+    exit 1
+  fi
+  USER_SSO_TOKEN=`authUser ${USER} ${PASSWORD} ${REALM}`
+  if [ -z "${USER_SSO_TOKEN}" ]; then
+    printf "ERROR: SSO token for user ${USER} is null. User authentication must have failed. Aborting.\n"
+    exit 1
+  fi
+
+  printf "=============================================================\n"
+  printf "INFO: Authentication successful as user ${USER}.\n"
+  printf "INFO: SSO_TOKEN is ${USER_SSO_TOKEN}.\n"
+  printf "=============================================================\n"
+  ${SED} -e "s/%SSO_TOKEN%/${USER_SSO_TOKEN}/g" templates/authz-evaluation-request-tv.json.TEMPLATE > ${TMP_BASE}/authz-evaluation-request-tv.json
+  URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/policies?_action=evaluateTree&_prettyPrint=true"
+  RES=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --header "iPlanetDirectoryPro: ${ADMIN_SSO_TOKEN}" --data @${TMP_BASE}/authz-evaluation-request-tv.json "${URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}. Aborting\n"
+    return 1
+  fi 
+
+  printf "INFO: Evaluating access to Homecinema:\n" 
+  printf "=============================================================\n"
+  printf "INFO: Request URL: ${URL}\n"
+  printf "INFO: Request:\n`cat ${TMP_BASE}/authz-evaluation-request-tv.json`\n"
+  printf "=============================================================\n"
+  printf "INFO: Response:\n${RES}\n"
+  printf "=============================================================\n"
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+#evaluatePolicyTV demo changeit ${OPENAM_AUTHZ_REALM}
+if [ $# -ne 2 ]; then
+  printf "Usage: $0 <user> <password>\n"
+  printf "Example: $0 bob B0bsPasswrd987\n"
+  exit 1
+fi
+evaluatePolicyTV "${1}" "${2}" ${OPENAM_AUTHZ_REALM}
+
