@@ -26,11 +26,12 @@ CP=/bin/cp
 WGET=/bin/wget
 AWK=/bin/awk
 LSOF=/sbin/lsof
+BASE64=/bin/base64
 PS=/bin/ps
 XARGS=/bin/xargs
 #JQ=/bin/jq
 JQ=/opt/misc/jq
-TOOLS="${MKDIR} ${UNZIP} ${TAR} ${CHMOD} ${PWD} ${RM} ${CURL} ${OPENSSL} ${MV} ${CP} ${SED} ${DATE} ${NETSTAT} ${GREP} ${CHOWN} ${CHMOD} ${CP} ${WGET} ${AWK} ${LSOF}"
+TOOLS="${MKDIR} ${UNZIP} ${TAR} ${CHMOD} ${PWD} ${RM} ${CURL} ${OPENSSL} ${MV} ${CP} ${SED} ${DATE} ${NETSTAT} ${GREP} ${CHOWN} ${CHMOD} ${CP} ${WGET} ${AWK} ${LSOF} ${BASE64}"
 
 #
 # Return code handling: Always set the _RC variable in the
