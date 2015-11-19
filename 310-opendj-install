@@ -52,6 +52,8 @@ installOpenDJ() {
     exitFailure
   fi
   export JAVA_HOME
+  # The OPENDJ_JAVA_HOME variable is picked up by the OpenDJ install process - must be set to get the proper JVM
+  export OPENDJ_JAVA_HOME=${JAVA_HOME}
   ${SETUP} --cli --no-prompt -b ${OPENDJ_SUFFIX} -a -p ${OPENDJ_LDAP_PORT} --adminConnectorPort ${OPENDJ_ADMIN_PORT} -D ${OPENDJ_ADMIN} -w ${OPENDJ_ADMIN_PASSWORD} -O --acceptLicense
   if [ $? != 0 ]; then
     printf "ERROR: OpenDJ setup failed. Aborting.\n"
