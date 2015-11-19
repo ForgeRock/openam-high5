@@ -1,0 +1,7 @@
+{
+  "_id": "%MODULE_NAME%",
+  "serverScript" : "%SERVER_SCRIPT_ID%",
+  "authenticationLevel" : 1,
+  "clientScript" : "[Empty]",
+  "clientScriptEnabled" : false
+}

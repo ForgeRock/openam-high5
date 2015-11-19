@@ -1,0 +1,84 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+. ./651-authz-base
+
+#---------------------------------------------
+getScriptID() {
+#---------------------------------------------
+  SCRIPT_NAME=$1
+  REALM=$2
+  SSO_TOKEN=$3
+
+  #Search for the resource type with the given name and return the UUID
+  URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/scripts?_queryFilter=name%20eq%20%22${SCRIPT_NAME}%22&_prettyPrint=true"
+  RES=`${CURL} -s --insecure --request GET --header "iPlanetDirectoryPro: ${SSO_TOKEN}" "${URL}"`
+  SCRIPT_ID=`echo ${RES} | /opt/misc/jq --raw-output '.result[]._id'`
+  #printf "INFO: UUID=${UUID}\n"
+  echo ${SCRIPT_ID}
+}
+
+#---------------------------------------------
+createScriptedAuthModuleSample() {
+#---------------------------------------------
+  REALM=$1
+  MODULE_NAME=$2
+
+  SSO_TOKEN=`authAdmin`
+  if [ -z "${SSO_TOKEN}" ]; then
+    printf "ERROR: Admin SSO token is null. Admin authentication must have failed. Aborting.\n"
+    exit 1
+  fi
+
+  printf "=============================================================\n"
+  printf "INFO: [Step 1] Create server-side authentication script ...\n"
+  printf "=============================================================\n"
+  REST_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/scripts?_action=create&_prettyPrint=true"
+
+  FILE=${TMP_BASE}/auth-server-side-script.json
+  SCRIPT_NAME="sampleAuthServerSideScript"
+  SCRIPT=templates/auth-server-side-script.js
+  SCRIPT_B64=`${BASE64} --wrap=0 ${SCRIPT}`
+  ${SED} -e "s/%SCRIPT_NAME%/${SCRIPT_NAME}/g" -e "s/%SCRIPT%/${SCRIPT_B64}/g" templates/auth-server-side-script.json.TEMPLATE > ${FILE}
+  printf "INFO: [Request-URL] ${REST_URL}\n"
+  printf "INFO: [Request-JSON]\n`cat ${FILE}`\n"
+
+  RES=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @${FILE} "${REST_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response]\n${RES}\n"
+  fi
+
+  printf "=============================================================\n"
+  printf "INFO: [Step 2] Create authentication module ...\n"
+  printf "=============================================================\n"
+  REST_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/realm-config/authentication/modules/scripted?_action=create&_prettyPrint=true"
+  FILE=${TMP_BASE}/auth-scripted-module.json
+  SERVER_SCRIPT_ID=`getScriptID ${SCRIPT_NAME} ${REALM} ${SSO_TOKEN}`
+  ${SED} -e "s/%MODULE_NAME%/${MODULE_NAME}/g" -e "s/%SERVER_SCRIPT_ID%/${SERVER_SCRIPT_ID}/g" templates/auth-scripted-module.json.TEMPLATE > ${FILE}
+  printf "INFO: [Request-URL] ${REST_URL}\n"
+  printf "INFO: [Request-JSON]\n`cat ${FILE}`\n"
+
+  RES=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @${FILE} "${REST_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response]\n${RES}\n"
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+createScriptedAuthModuleSample ${OPENAM_BASE_REALM} scriptedAuthModule
+
