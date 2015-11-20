@@ -1,0 +1,12 @@
+{
+  "_id": "%CHAIN_NAME%",
+  "loginPostProcessClass" : [ ],
+  "authChainConfiguration" : [ ],
+  "loginFailureUrl" : [ "" ],
+  "loginSuccessUrl" : [ "" ],
+  "authChainConfiguration" : [ {
+    "module" : "%MODULE_NAME%",
+    "criteria" : "REQUIRED",
+    "options" : { }
+  } ]
+}

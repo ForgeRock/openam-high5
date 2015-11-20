@@ -1,0 +1,8 @@
+{
+  "authChainConfiguration": [
+    { "module" : "%MODULE_NAME%",
+      "options" : {},
+      "criteria" : "REQUIRED",
+      "type":"scripted"
+    } ]
+}

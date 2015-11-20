@@ -26,6 +26,7 @@ createScriptedAuthModuleSample() {
 #---------------------------------------------
   REALM=$1
   MODULE_NAME=$2
+  CHAIN_NAME=$3
 
   SSO_TOKEN=`authAdmin`
   if [ -z "${SSO_TOKEN}" ]; then
@@ -75,10 +76,49 @@ createScriptedAuthModuleSample() {
   else
     printf "INFO: [Response]\n${RES}\n"
   fi
+
+  printf "=============================================================\n"
+  printf "INFO: [Step 3] Create authentication chain (with module) ...\n"
+  printf "=============================================================\n"
+  REST_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/realm-config/authentication/chains?_action=create&_prettyPrint=true"
+  FILE=${TMP_BASE}/auth-scripted-chain.json
+  ${SED} -e "s/%CHAIN_NAME%/${CHAIN_NAME}/g" -e "s/%MODULE_NAME%/${MODULE_NAME}/g" templates/auth-scripted-chain.json.TEMPLATE > ${FILE}
+  printf "INFO: [Request-URL] ${REST_URL}\n"
+  printf "INFO: [Request-JSON]\n`cat ${FILE}`\n"
+
+  RES=`${CURL} -s --insecure --request POST --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @${FILE} "${REST_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response]\n${RES}\n"
+  fi
+
+  printf "=============================================================\n"
+  printf "INFO: [Step 4] Set default chain for realm ...\n"
+  printf "=============================================================\n"
+  REST_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/${REALM}/realm-config/authentication?_prettyPrint=true"
+  FILE=${TMP_BASE}/auth-realm-config.json
+  ${SED} -e "s/%CHAIN_NAME%/${CHAIN_NAME}/g" templates/auth-realm-config.json.TEMPLATE > ${FILE}
+  printf "INFO: [Request-URL / PUT] ${REST_URL}\n"
+  printf "INFO: [Request-JSON]\n`cat ${FILE}`\n"
+
+  # Note that the following operation is a PUT (and not POST)
+  RES=`${CURL} -s --insecure --request PUT --header "iPlanetDirectoryPro: ${SSO_TOKEN}" --header "Content-Type: application/json" --data @${FILE} "${REST_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response]\n${RES}\n"
+  fi
 }
 
 #---------------------------------------------
 # Main
 #---------------------------------------------
-createScriptedAuthModuleSample ${OPENAM_BASE_REALM} scriptedAuthModule
+createScriptedAuthModuleSample ${OPENAM_BASE_REALM} scriptedAuthModule scriptedModuleChain
 

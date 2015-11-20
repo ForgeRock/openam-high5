@@ -1,0 +1,5 @@
+{
+  "orgConfig" : "%CHAIN_NAME%",
+  "adminAuthModule" : "ldapService"
+}
+
