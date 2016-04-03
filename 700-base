@@ -1,0 +1,82 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+. ./651-authz-base
+
+#----------------------------------------------------------
+createRealm() {
+#----------------------------------------------------------
+  REALM=$1
+
+  ADMIN_SSO_TOKEN=`authAdmin`
+  if [ -z "${ADMIN_SSO_TOKEN}" ]; then
+    printf "ERROR: Admin SSO token is null. Admin authentication must have failed. Aborting.\n"
+    exit 1
+  fi
+
+  printf "=============================================================\n"
+  printf "INFO: Creating realm ${REALM} ...\n"
+  printf "=============================================================\n"
+  ${SED} -e "s/%REALM%/${REALM}/g" templates/realm-create.json.TEMPLATE > ${TMP_BASE}/uma-realm-create.json
+  REST_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/global-config/realms?_action=create&_prettyPrint=true"
+
+  printf "INFO: [Request-URL] ${REST_URL}\n"
+  printf "INFO: [Request-JSON]\n`cat ${TMP_BASE}/uma-realm-create.json`\n"
+
+  RES=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --header "iPlanetDirectoryPro: ${ADMIN_SSO_TOKEN}" --data @${TMP_BASE}/uma-realm-create.json "${REST_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response]\n${RES}\n"
+  fi
+}
+
+#----------------------------------------------------------
+removeRealm() {
+#----------------------------------------------------------
+  REALM=$1
+
+  ADMIN_SSO_TOKEN=`authAdmin`
+  if [ -z "${ADMIN_SSO_TOKEN}" ]; then
+    printf "ERROR: Admin SSO token is null. Admin authentication must have failed. Aborting.\n"
+    exit 1
+  fi
+
+  printf "=============================================================\n"
+  printf "INFO: Removing realm ${REALM} ...\n"
+  printf "=============================================================\n"
+  REST_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/global-config/realms/${REALM}"
+
+  printf "INFO: [Request-URL] ${REST_URL}\n"
+  printf "INFO: [Request-BODY] Empty\n"
+
+  RES=`${CURL} -s --insecure --request DELETE --header "iPlanetDirectoryPro: ${ADMIN_SSO_TOKEN}" "${REST_URL}"`
+  RC=$?
+
+  if [ ${RC} != 0 ]; then
+    printf "ERROR: curl returned ${RC}.\n"
+    return 1
+  else
+    printf "INFO: [Response]\n${RES}\n"
+  fi
+}
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+printScriptStart
+if [ $# == 1 ] && [ $1 == "remove" ]; then
+  printf "INFO: Mode is REMOVE.\n"
+  removeRealm ${OPENAM_MS_REALM}
+else
+  createRealm ${OPENAM_MS_REALM}
+fi
+#stopTomcat
+#startTomcat
+printScriptEnd

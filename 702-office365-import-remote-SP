@@ -1,0 +1,46 @@
+#!/bin/bash 
+
+. ./platform.properties
+. ./functions
+#. ./functions-tomcat
+. ./functions-openam
+
+#----------------------------------------------------------
+importSPMetadata() {
+#----------------------------------------------------------
+  REALM=$1
+  METADATA_FILE=$2
+  EXTENDED_FILE=$3
+  SPEC=$4
+
+  # Create template
+  printf "INFO: Importing metadata for remote Office 365 SP for protocol ${SPEC}.\n"
+  ${OPENAM_SSOADM} import-entity --realm ${REALM} -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --meta-data-file ${METADATA_FILE} --extended-data-file ${EXTENDED_FILE} --spec ${SPEC} --cot ${OPENAM_MS_COT} 
+  #${OPENAM_SSOADM} import-entity --realm ${REALM} -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --meta-data-file ${METADATA_FILE} --spec ${SPEC} --cot ${OPENAM_MS_COT} 
+
+  if [ $? != 0 ]; then
+    printf "ERROR: Error importing metadata.\n"
+  else
+    printf "INFO: Successfully imported metadata.\n"
+  fi
+}
+
+#----------------------------------------------------------
+exportMetadata() {
+#----------------------------------------------------------
+  REALM=$1
+
+  # Export entity
+  printf "INFO: Exporting SAML2 metadata.\n"
+  ${OPENAM_SSOADM} export-entity -d -v --realm ${REALM} -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --entityid "urn:federation:MicrosoftOnline" --meta-data-file /tmp/meta.xml --extended-data-file /tmp/extended.xml --spec wsfed
+}
+
+
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+#exportMetadata  ${OPENAM_MS_REALM}
+#importSPMetadata ${OPENAM_MS_REALM} templates/office365-saml2-meta.xml templates/office365-saml2-extended.xml saml2
+#importSPMetadata ${OPENAM_MS_REALM} templates/office365-wsfed-meta.xml templates/office365-wsfed-extended.xml wsfed
+exportMetadata  ${OPENAM_MS_REALM} 

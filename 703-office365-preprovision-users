@@ -1,0 +1,26 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+. ./functions-openam
+
+OPENAM_LDAPSEARCH=${OPENAM_CONFIG_BASE}/opends/bin/ldapsearch
+OPENAM_LDAPMODIFY=${OPENAM_CONFIG_BASE}/opends/bin/ldapmodify
+
+#---------------------------------------------
+modifyTemplate() {
+#---------------------------------------------
+  OPENAM_MS_IDP_ENTITYID_SAML_ESCAPED=`escapeURL "${OPENAM_MS_IDP_ENTITYID_SAML}"`
+  MS_SP_ENTITYID_SAML_ESCAPED=`escapeURL "${MS_SP_ENTITYID_SAML}"`
+
+  ${SED} -e "s/%SUFFIX%/${OPENAM_DS_SUFFIX}/g" -e "s/%USERS_BASE_DN%/${OPENAM_DS_USERS_BASE_DN}/g" -e "s/%GROUPS_BASE_DN%/${OPENAM_DS_GROUPS_BASE_DN}/g" -e "s/%MS_DOMAIN%/${MS_DOMAIN}/g" -e "s/%MS_SP_ENTITYID_SAML%/${MS_SP_ENTITYID_SAML_ESCAPED}/g" -e "s/%OPENAM_MS_IDP_ENTITYID_SAML%/${OPENAM_MS_IDP_ENTITYID_SAML_ESCAPED}/g" templates/office365_userdata.ldif.TEMPLATE > ${TMP_BASE}/office365_userdata.ldif
+}
+
+#---------------------------------------------
+importSubjects() {
+#---------------------------------------------
+  ${OPENAM_LDAPMODIFY} -h localhost -p ${OPENAM_DS_PORT} -D ${OPENAM_DS_ADMIN} -w ${OPENAM_DS_ADMIN_PASSWORD} -a -c -f ${TMP_BASE}/office365_userdata.ldif
+}
+
+modifyTemplate
+importSubjects
