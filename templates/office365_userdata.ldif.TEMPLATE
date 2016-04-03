@@ -1,0 +1,53 @@
+n: %SUFFIX%
+objectClass: domain
+objectClass: top
+
+dn: ou=people,%SUFFIX%
+objectClass: organizationalUnit
+objectClass: top
+
+dn: ou=admins,%SUFFIX%
+objectClass: organizationalUnit
+objectClass: top
+
+dn: uid=mike,ou=people,%SUFFIX%
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+objectclass: sunFMSAML2NameIdentifier
+uid: mike
+sn: Mueller
+cn: Mike Mueller
+userpassword: password
+mail: mike@%MS_DOMAIN%
+sun-fm-saml2-nameid-info: %OPENAM_MS_IDP_ENTITYID_SAML%|%MS_SP_ENTITYID_SAML%|mike|%OPENAM_MS_IDP_ENTITYID_SAML%|urn:oasis:names:tc:SAML:2.0:nameid-format:persistent|mike|%MS_SP_ENTITYID_SAML%|IDPRole|false
+sun-fm-saml2-nameid-infokey: %OPENAM_MS_IDP_ENTITYID_SAML%|%MS_SP_ENTITYID_SAML%|mike
+
+dn: uid=bart,ou=people,%SUFFIX%
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+objectclass: sunFMSAML2NameIdentifier
+uid: bart
+sn: Baker
+cn: Bart Baker
+userpassword: password
+mail: bart@%MS_DOMAIN%
+sun-fm-saml2-nameid-info: %OPENAM_MS_IDP_ENTITYID_SAML%|%MS_SP_ENTITYID_SAML%|bart|%OPENAM_MS_IDP_ENTITYID_SAML%|urn:oasis:names:tc:SAML:2.0:nameid-format:persistent|bart|%MS_SP_ENTITYID_SAML%|IDPRole|false
+sun-fm-saml2-nameid-infokey: %OPENAM_MS_IDP_ENTITYID_SAML%|%MS_SP_ENTITYID_SAML%|bart
+
+dn: uid=jo,ou=people,%SUFFIX%
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+objectclass: sunFMSAML2NameIdentifier
+uid: jo
+sn: Jackson
+cn: Jo Jackson
+userpassword: password
+mail: jo@%MS_DOMAIN%
+sun-fm-saml2-nameid-info: %OPENAM_MS_IDP_ENTITYID_SAML%|%MS_SP_ENTITYID_SAML%|jo|%OPENAM_MS_IDP_ENTITYID_SAML%|urn:oasis:names:tc:SAML:2.0:nameid-format:persistent|jo|%MS_SP_ENTITYID_SAML%|IDPRole|false
+sun-fm-saml2-nameid-infokey: %OPENAM_MS_IDP_ENTITYID_SAML%|%MS_SP_ENTITYID_SAML%|jo

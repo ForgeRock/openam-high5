@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<EntityConfig entityID="urn:federation:MicrosoftOnline" hosted="false" xmlns="urn:sun:fm:SAML:2.0:entityconfig">
+    <SPSSOConfig>
+        <Attribute name="wantLogoutResponseSigned"/>
+        <Attribute name="wantAttributeEncrypted"/>
+        <Attribute name="spAuthncontextMapper"/>
+        <Attribute name="alwaysIdpProxy"/>
+        <Attribute name="autofedAttribute"/>
+        <Attribute name="spSessionSyncEnabled"/>
+        <Attribute name="spAuthncontextComparisonType"/>
+        <Attribute name="idpProxyList"/>
+        <Attribute name="spDoNotWriteFederationInfo"/>
+        <Attribute name="wantPOSTResponseSigned"/>
+        <Attribute name="localAuthURL"/>
+        <Attribute name="wantMNIRequestSigned"/>
+        <Attribute name="spAdapterEnv"/>
+        <Attribute name="basicAuthPassword"/>
+        <Attribute name="transientUser"/>
+        <Attribute name="cotlist">
+            <Value>mscot</Value>
+        </Attribute>
+        <Attribute name="spAttributeMapper"/>
+        <Attribute name="saeSPUrl"/>
+        <Attribute name="responseArtifactMessageEncoding">
+            <Value>URI</Value>
+        </Attribute>
+        <Attribute name="useNameIDAsSPUserID"/>
+        <Attribute name="wantAssertionEncrypted"/>
+        <Attribute name="saml2AuthModuleName"/>
+        <Attribute name="signingCertAlias"/>
+        <Attribute name="relayStateUrlList"/>
+        <Attribute name="appLogoutUrl"/>
+        <Attribute name="useIntroductionForIDPProxy"/>
+        <Attribute name="ECPRequestIDPListGetComplete"/>
+        <Attribute name="attributeMap">
+            <Value>IDPEmail=mail</Value>
+        </Attribute>
+        <Attribute name="spAuthncontextClassrefMapping"/>
+        <Attribute name="wantMNIResponseSigned"/>
+        <Attribute name="wantLogoutRequestSigned"/>
+        <Attribute name="metaAlias"/>
+        <Attribute name="ECPRequestIDPListFinderImpl"/>
+        <Attribute name="spAccountMapper"/>
+        <Attribute name="includeRequestedAuthnContext"/>
+        <Attribute name="spAdapter"/>
+        <Attribute name="ECPRequestIDPList"/>
+        <Attribute name="saeAppSecretList"/>
+        <Attribute name="idpProxyCount"/>
+        <Attribute name="wantArtifactResponseSigned"/>
+        <Attribute name="basicAuthOn"/>
+        <Attribute name="wantNameIDEncrypted"/>
+        <Attribute name="basicAuthUser"/>
+        <Attribute name="saeSPLogoutUrl"/>
+        <Attribute name="intermediateUrl"/>
+        <Attribute name="useIDPFinder"/>
+        <Attribute name="encryptionCertAlias"/>
+        <Attribute name="defaultRelayState"/>
+        <Attribute name="assertionTimeSkew"/>
+        <Attribute name="autofedEnabled"/>
+        <Attribute name="enableIDPProxy"/>
+    </SPSSOConfig>
+</EntityConfig>
+
