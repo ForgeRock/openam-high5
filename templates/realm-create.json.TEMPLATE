@@ -1,0 +1,6 @@
+{
+  "name" : "%REALM%",
+  "parentPath" : "/",
+  "aliases" : [],
+  "active":true
+}
