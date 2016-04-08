@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 . ./platform.properties
 . ./functions
@@ -20,13 +20,13 @@ createRealm() {
   printf "=============================================================\n"
   printf "INFO: Creating realm ${REALM} ...\n"
   printf "=============================================================\n"
-  ${SED} -e "s/%REALM%/${REALM}/g" templates/realm-create.json.TEMPLATE > ${TMP_BASE}/uma-realm-create.json
+  ${SED} -e "s/%REALM%/${REALM}/g" templates/realm-create.json.TEMPLATE > ${TMP_BASE}/realm-create.json
   REST_URL="https://${SERVER_FQDN}:443/${OPENAM_DEPLOYMENT_URI}/json/global-config/realms?_action=create&_prettyPrint=true"
 
   printf "INFO: [Request-URL] ${REST_URL}\n"
-  printf "INFO: [Request-JSON]\n`cat ${TMP_BASE}/uma-realm-create.json`\n"
+  printf "INFO: [Request-JSON]\n`cat ${TMP_BASE}/realm-create.json`\n"
 
-  RES=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --header "iPlanetDirectoryPro: ${ADMIN_SSO_TOKEN}" --data @${TMP_BASE}/uma-realm-create.json "${REST_URL}"`
+  RES=`${CURL} -s --insecure --request POST --header "Content-Type: application/json" --header "iPlanetDirectoryPro: ${ADMIN_SSO_TOKEN}" --data @${TMP_BASE}/realm-create.json "${REST_URL}"`
   RC=$?
 
   if [ ${RC} != 0 ]; then

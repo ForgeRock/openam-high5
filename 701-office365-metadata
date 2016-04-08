@@ -6,7 +6,7 @@
 . ./functions-openam
 
 #----------------------------------------------------------
-createMetadataTemplate() {
+createIDPMetadataFiles() {
 #----------------------------------------------------------
   # Create template
   printf "INFO: Creating WS-Federation metadata templates.\n"
@@ -27,7 +27,7 @@ createMetadataTemplateWsfed() {
 #----------------------------------------------------------
   # Create template
   printf "INFO: Creating WS-Federation metadata templates.\n"
-  ${OPENAM_SSOADM} create-metadata-templ -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --entityid "https://sts.windows.net/01d79c4f-10a1-4577-9682-7529e025e494/" --serviceprovider spwsfed --meta-data-file spwsfed-meta.xml --extended-data-file  spwsfed-extended.xml --spec wsfed
+  ${OPENAM_SSOADM} create-metadata-templ -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --entityid "${MS_SP_ENTITYID_SAML}" --serviceprovider spwsfed --meta-data-file spwsfed-meta.xml --extended-data-file  spwsfed-extended.xml --spec wsfed
 
   if [ $? != 0 ]; then
     printf "ERROR: Error creating metadata template.\n"
@@ -53,14 +53,13 @@ createCOT() {
 }
 
 #----------------------------------------------------------
-importMetadata() {
+importIDPMetadata() {
 #----------------------------------------------------------
   REALM=$1
 
   # Create template
   printf "INFO: Importing WS-Federation metadata.\n"
-  #${OPENAM_SSOADM} import-entity --realm ${REALM} -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --meta-data-file ${OPENAM_MS_IDP_META_WSFED} --extended-data-file ${OPENAM_MS_IDP_META_EXTENDED_WSFED} --spec wsfed --cot ${OPENAM_MS_COT} 
-  ${OPENAM_SSOADM} import-entity --realm ${REALM} -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --meta-data-file /tmp/meta.xml --extended-data-file /tmp/extended.xml --spec wsfed --cot ${OPENAM_MS_COT} 
+  ${OPENAM_SSOADM} import-entity --realm ${REALM} -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --meta-data-file ${OPENAM_MS_IDP_META_WSFED} --extended-data-file ${OPENAM_MS_IDP_META_EXTENDED_WSFED} --spec wsfed --cot ${OPENAM_MS_COT} 
 
   printf "INFO: Importing SAML2 metadata.\n"
   ${OPENAM_SSOADM} import-entity --realm ${REALM} -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --meta-data-file ${OPENAM_MS_IDP_META_SAML} --extended-data-file  ${OPENAM_MS_IDP_META_EXTENDED_SAML} --cot ${OPENAM_MS_COT} --spec saml2
@@ -86,8 +85,8 @@ importMetadata() {
 #---------------------------------------------
 # Main
 #---------------------------------------------
-createMetadataTemplate ${OPENAM_MS_REALM}
+#createIDPMetadataFiles ${OPENAM_MS_REALM}
 #createMetadataTemplateWsfed ${OPENAM_MS_REALM}
 #createCOT ${OPENAM_MS_REALM}
-#importMetadata ${OPENAM_MS_REALM}
+importIDPMetadata ${OPENAM_MS_REALM}
 #exportMetadata ${OPENAM_MS_REALM}

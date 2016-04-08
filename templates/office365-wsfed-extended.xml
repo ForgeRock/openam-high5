@@ -36,6 +36,7 @@
         </Attribute>
         <Attribute name="attributeMap">
             <Value>IDPEmail=mail</Value>
+            <Value>ImmutableID=mail;binary</Value>
         </Attribute>
         <Attribute name="saml2AuthModuleName">
             <Value/>

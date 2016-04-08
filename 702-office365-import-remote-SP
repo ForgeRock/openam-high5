@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 . ./platform.properties
 . ./functions
@@ -41,6 +41,6 @@ exportMetadata() {
 # Main
 #---------------------------------------------
 #exportMetadata  ${OPENAM_MS_REALM}
-#importSPMetadata ${OPENAM_MS_REALM} templates/office365-saml2-meta.xml templates/office365-saml2-extended.xml saml2
-#importSPMetadata ${OPENAM_MS_REALM} templates/office365-wsfed-meta.xml templates/office365-wsfed-extended.xml wsfed
-exportMetadata  ${OPENAM_MS_REALM} 
+importSPMetadata ${OPENAM_MS_REALM} templates/office365-saml2-meta.xml templates/office365-saml2-extended.xml saml2
+importSPMetadata ${OPENAM_MS_REALM} templates/office365-wsfed-meta.xml templates/office365-wsfed-extended.xml wsfed
+#exportMetadata  ${OPENAM_MS_REALM} 
