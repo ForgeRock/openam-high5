@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. ./platform.properties
+. ./functions
+#. ./functions-tomcat
+. ./functions-openam
+
+#----------------------------------------------------------
+exportMetadata() {
+#----------------------------------------------------------
+  REALM=$1
+
+  # Export entity
+  printf "INFO: Exporting SAML2 metadata.\n"
+  ${OPENAM_SSOADM} export-entity -d -v --realm ${REALM} -u ${OPENAM_ADMIN} -f ${OPENAM_SSOADM_PASSFILE} --entityid "urn:federation:MicrosoftOnline" --meta-data-file /tmp/sp-wsfed-meta.xml --extended-data-file /tmp/sp-wsfed-extended.xml --spec wsfed
+}
+
+
+
+#---------------------------------------------
+# Main
+#---------------------------------------------
+exportMetadata  ${OPENAM_MS_REALM} 
