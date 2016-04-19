@@ -1,5 +1,10 @@
 # openam-high5
 
+##Warning
+**This code is not supported by ForgeRock and it is your responsibility to verify that the software is suitable and safe for use.**
+
+##About
+
 A selection of script to deploy OpenAM and setup specific use cases. In particular to back use cases discussed on the identity management blog at http://identityrocks.blogspot.fr
 
 The uses cases comprise :
